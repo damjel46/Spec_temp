@@ -31,7 +31,7 @@ export default function Intro({ onStart }: Props) {
 
       <div style={s.hero}>
         <div style={s.iconWrap}>
-          <span style={s.icon}>🌡️</span>
+          <img src="/logo.png" alt="스펙 온도 로고" style={s.logoImg} />
         </div>
         <h1 style={s.headline}>내 스펙의 온도는{'\n'}몇 도일까요?</h1>
         <p style={s.subtext}>
@@ -76,16 +76,15 @@ const s: Record<string, React.CSSProperties> = {
   iconWrap: {
     width: 100,
     height: 100,
-    borderRadius: 32,
-    background: 'linear-gradient(135deg, #4fa8f8 0%, #3182f6 100%)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 22,
+    overflow: 'hidden',
     marginBottom: 24,
-    boxShadow: '0 8px 24px rgba(49,130,246,0.25)',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
   },
-  icon: {
-    fontSize: 48,
+  logoImg: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
   },
   headline: {
     fontSize: 24,

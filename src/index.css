@@ -9,6 +9,23 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+input::placeholder,
+textarea::placeholder {
+  opacity: 0.6;
+}
+
+/* TextField 항상 파란 밑줄 */
+.css-1etui5b {
+  border-bottom-color: #3182f6 !important;
+}
+
+/* TDS BottomSheet 패널 배경 강제 적용 */
+[class*="BottomSheet"],
+[class*="bottomSheet"],
+[class*="bottom-sheet"] {
+  background-color: #ffffff !important;
+}
+
 #root {
   max-width: 375px;
   margin: 0 auto;

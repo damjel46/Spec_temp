@@ -66,6 +66,8 @@ export default function CommonForm({ onNext }: Props) {
   const [situationOpen, setSituationOpen] = useState(false);
   const [companyOpen, setCompanyOpen] = useState(false);
   const [jobTypeOpen, setJobTypeOpen] = useState(false);
+  const [etcInputMode, setEtcInputMode] = useState(false);
+  const [etcInputTemp, setEtcInputTemp] = useState('');
   const [gpaError, setGpaError] = useState<string | null>(null);
 
   /* ── 유효성 ── */
@@ -146,8 +148,11 @@ export default function CommonForm({ onNext }: Props) {
     });
   };
 
+  const anySheetOpen = certSheetOpen || situationOpen || companyOpen || jobTypeOpen || langTestOpenIdx !== null;
+
   return (
     <div style={s.container}>
+      {anySheetOpen && <div style={s.dimmer} />}
       <div style={s.scrollContent}>
         <Top title="스펙 입력" subtitleBottom="기본 정보를 입력해주세요" />
 
@@ -158,21 +163,24 @@ export default function CommonForm({ onNext }: Props) {
 
         {/* 학력 */}
         <ListHeader title="학력" />
-        <ListRow left={
-          <TextField variant="line" label="학교명" value={schoolName}
+        <div style={s.inputWrap} className="always-blue-line">
+          <span style={s.inputLabel}>학교명</span>
+          <TextField variant="line" value={schoolName}
             onChange={e => setSchoolName(e.target.value)} placeholder="학교명을 입력해주세요" />
-        } />
-        <ListRow left={
-          <TextField variant="line" label="전공" value={major}
+        </div>
+        <div style={s.inputWrap} className="always-blue-line">
+          <span style={s.inputLabel}>전공</span>
+          <TextField variant="line" value={major}
             onChange={e => setMajor(e.target.value)} placeholder="전공을 입력해주세요" />
-        } />
-        <ListRow left={
-          <TextField variant="line" label="학점 (4.5 기준)" value={gpa}
+        </div>
+        <div style={s.inputWrap} className="always-blue-line">
+          <span style={s.inputLabel}>학점 (4.5 기준)</span>
+          <TextField variant="line" value={gpa}
             onChange={e => setGpa(e.target.value)} onBlur={handleGpaBlur}
             inputMode="decimal" placeholder="예) 3.8" hasError={!!gpaError}
             help={gpaError ? <span style={{ color: colors.red500, fontSize: 12 }}>{gpaError}</span> : undefined}
           />
-        } />
+        </div>
         <SectionGap />
 
         {/* 어학 */}
@@ -260,14 +268,8 @@ export default function CommonForm({ onNext }: Props) {
         <ListRow
           onClick={() => setJobTypeOpen(true)}
           left={<span style={s.rowLabel}>지원 직무</span>}
-          right={<div style={s.rowRight}><span style={jobType ? s.selectedValue : s.placeholderValue}>{jobType ? LABEL.job[jobType] : '선택'}</span><ChevronRight /></div>}
+          right={<div style={s.rowRight}><span style={jobType ? s.selectedValue : s.placeholderValue}>{jobType === 'etc' ? (etcJobDesc || '기타') : (jobType ? LABEL.job[jobType] : '선택')}</span><ChevronRight /></div>}
         />
-        {jobType === 'etc' && (
-          <ListRow left={
-            <TextField variant="line" label="직군 설명" value={etcJobDesc}
-              onChange={e => setEtcJobDesc(e.target.value)} placeholder="예) 마케터, UX 디자이너 등" />
-          } />
-        )}
       </div>
 
       <FixedBottomCTA onClick={handleSubmit} disabled={!isValid}>다음</FixedBottomCTA>
@@ -294,7 +296,7 @@ export default function CommonForm({ onNext }: Props) {
       {/* 자격증 검색 BottomSheet */}
       <BottomSheet open={certSheetOpen} onDimmerClick={() => setCertSheetOpen(false)}>
         <BottomSheet.Header>자격증 선택</BottomSheet.Header>
-        <div style={s.certSearchWrap}>
+        <div style={s.certSearchWrap} className="always-blue-line">
           <TextField
             variant="line"
             label=""
@@ -346,13 +348,36 @@ export default function CommonForm({ onNext }: Props) {
       </BottomSheet>
 
       {/* 지원 직무 */}
-      <BottomSheet open={jobTypeOpen} onDimmerClick={() => setJobTypeOpen(false)}>
+      <BottomSheet open={jobTypeOpen} onDimmerClick={() => { setJobTypeOpen(false); setEtcInputMode(false); }}>
         <BottomSheet.Header>지원 직무</BottomSheet.Header>
-        {JOB_TYPES.map(item => (
-          <ListRow key={item.value} onClick={() => { setJobType(item.value); setJobTypeOpen(false); }}
-            left={<span style={s.rowLabel}>{item.label}</span>}
-            right={jobType === item.value ? <span style={s.checkmark}>✓</span> : null} />
-        ))}
+        {!etcInputMode
+          ? JOB_TYPES.map(item => (
+              <ListRow key={item.value}
+                onClick={() => {
+                  if (item.value === 'etc') {
+                    setEtcInputTemp(etcJobDesc);
+                    setEtcInputMode(true);
+                  } else {
+                    setJobType(item.value);
+                    setJobTypeOpen(false);
+                  }
+                }}
+                left={<span style={s.rowLabel}>{item.label}</span>}
+                right={jobType === item.value ? <span style={s.checkmark}>✓</span> : null} />
+            ))
+          : <div style={s.etcInputWrap} className="always-blue-line">
+              <span style={s.inputLabel}>직무명 입력</span>
+              <TextField variant="line" value={etcInputTemp}
+                onChange={e => setEtcInputTemp(e.target.value)}
+                placeholder="예) 마케터, UX 디자이너 등" />
+            </div>
+        }
+        {etcInputMode && (
+          <BottomSheet.CTA onClick={() => { setJobType('etc'); setEtcJobDesc(etcInputTemp); setEtcInputMode(false); setJobTypeOpen(false); }}
+            disabled={!etcInputTemp.trim()}>
+            확인
+          </BottomSheet.CTA>
+        )}
       </BottomSheet>
     </div>
   );
@@ -360,6 +385,12 @@ export default function CommonForm({ onNext }: Props) {
 
 const s: Record<string, React.CSSProperties> = {
   container: { position: 'relative', maxWidth: 375, margin: '0 auto', minHeight: '100vh' },
+  dimmer: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.5)',
+    zIndex: 99,
+  },
   scrollContent: { paddingBottom: 120 },
   stepper: { padding: '8px 24px 0' },
   rowLabel: { fontSize: 16, color: colors.grey900 },
@@ -368,6 +399,19 @@ const s: Record<string, React.CSSProperties> = {
   checkmark: { fontSize: 16, color: colors.blue500, fontWeight: 700 },
   addBtn: { fontSize: 15, color: colors.blue500, fontWeight: 500 },
   rowRight: { display: 'flex', alignItems: 'center', gap: 6 },
+  inputWrap: {
+    margin: '4px 16px',
+    border: `1px solid ${colors.grey100}`,
+    borderRadius: 8,
+    padding: '8px 12px 4px',
+  },
+  inputLabel: {
+    display: 'block',
+    fontSize: 12,
+    fontWeight: 500,
+    color: colors.grey600,
+    marginBottom: 2,
+  },
   langCard: {
     margin: '8px 16px',
     border: `1px solid ${colors.grey100}`,
@@ -396,6 +440,7 @@ const s: Record<string, React.CSSProperties> = {
   tag: { display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: '#e8f3ff', borderRadius: 16 },
   tagText: { fontSize: 13, color: colors.blue500, fontWeight: 500 },
   tagRemove: { fontSize: 14, color: colors.blue500, cursor: 'pointer', lineHeight: 1 },
+  etcInputWrap: { margin: '8px 16px 16px', padding: '8px 12px 4px', border: `1px solid ${colors.grey100}`, borderRadius: 8 },
   certSearchWrap: { padding: '0 16px 8px' },
   certList: { maxHeight: 320, overflowY: 'auto' as const },
   noResult: { padding: '16px 24px', fontSize: 14, color: colors.grey600, textAlign: 'center' as const },
