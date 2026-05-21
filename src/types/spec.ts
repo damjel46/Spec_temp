@@ -1,5 +1,6 @@
 export type OPICLevel = 'NL' | 'NM' | 'NH' | 'IL' | 'IM1' | 'IM2' | 'IM3' | 'IH' | 'AL';
 export type CompanyType = 'large' | 'mid' | 'startup' | 'public';
+export type EduLevel = 'college' | 'graduate' | 'highschool';
 export type SituationType = 'student' | 'jobseeker' | 'career';
 export type JobType = 'dev' | 'biz' | 'finance' | 'public' | 'etc';
 
@@ -10,11 +11,12 @@ export interface LanguageEntry {
 }
 
 export interface CommonSpec {
+  eduLevel: EduLevel;
   schoolName: string;
-  major: string;
-  gpa: number;
+  major?: string;
+  gpa?: number;
+  degree?: '석사' | '박사';
   languages: LanguageEntry[];
-  certificates: string[];
   targetCompany: CompanyType;
   situation: SituationType;
   jobType: JobType;
@@ -49,31 +51,38 @@ export interface PublicSpec {
 
 export type CareerLevel = 'entry' | 'under1' | '1to3' | '3to5' | '5plus';
 
+export interface ProjectEntry {
+  name: string;
+  github: string;
+  desc: string;
+  readme?: string;
+  readmeStatus?: 'idle' | 'loading' | 'done' | 'error' | 'private';
+}
+
 export interface DevJobSpec {
   careerLevel: CareerLevel;
   techStack: string[];
-  projects: string[];
-  tools: string;
+  projects: ProjectEntry[];
   notes: string;
+  certificates: string[];
 }
 
 export interface BizJobSpec {
   internMonths: number;
   contestAwards: number;
-  hasComputer1st: boolean;
-  hasKoreanHistory: boolean;
+  certificates: string[];
 }
 
 export interface FinanceJobSpec {
-  financeCerts: string[];
+  certificates: string[];
   hasFinanceIntern: boolean;
-  accountingCerts: string[];
 }
 
 export interface PublicJobSpec {
   ncsLevel: 'none' | 'basic' | 'intermediate' | 'advanced';
   koreanHistoryLevel: number;
   targetPublicType: string;
+  certificates: string[];
 }
 
 export interface EtcJobSpec {

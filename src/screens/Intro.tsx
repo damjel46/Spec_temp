@@ -27,7 +27,7 @@ const FEATURES = [
 export default function Intro({ onStart }: Props) {
   return (
     <div style={s.container}>
-      <Top title="스펙 온도" />
+      <Top title="" />
 
       <div style={s.hero}>
         <div style={s.iconWrap}>

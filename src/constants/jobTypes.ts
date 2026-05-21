@@ -1,10 +1,4 @@
-import { SchoolType, OPICLevel, CompanyType, SituationType, JobType } from '../types/spec';
-
-export const SCHOOL_TYPES: { label: string; value: SchoolType }[] = [
-  { label: '명문대', value: 'top' },
-  { label: '수도권', value: 'metro' },
-  { label: '지방대', value: 'local' },
-];
+import { OPICLevel, CompanyType, SituationType, JobType } from '../types/spec';
 
 export const SITUATION_TYPES: { label: string; value: SituationType }[] = [
   { label: '재학중', value: 'student' },
@@ -39,8 +33,7 @@ export const OPIC_LEVELS: { label: string; value: OPICLevel }[] = [
   { label: 'AL', value: 'AL' },
 ];
 
-export const COMMON_CERTIFICATES: string[] = [
-  // IT/개발
+export const DEV_CERTIFICATES: string[] = [
   '정보처리기사',
   '정보처리산업기사',
   'SQLD',
@@ -54,7 +47,9 @@ export const COMMON_CERTIFICATES: string[] = [
   'AWS Developer',
   'GCP Associate',
   'Azure Fundamentals',
-  // 경영/사무
+];
+
+export const BIZ_CERTIFICATES: string[] = [
   '컴퓨터활용능력 1급',
   '컴퓨터활용능력 2급',
   '워드프로세서',
@@ -65,7 +60,9 @@ export const COMMON_CERTIFICATES: string[] = [
   '한국사능력검정 3급',
   '비서 1급',
   '비서 2급',
-  // 금융/회계
+];
+
+export const FINANCE_CERTIFICATES: string[] = [
   'CFA Level 1',
   'CFA Level 2',
   'CFA Level 3',
@@ -73,20 +70,17 @@ export const COMMON_CERTIFICATES: string[] = [
   '재무위험관리사(FRM)',
   '공인회계사(CPA)',
   '세무사',
+  'AICPA',
   '전산세무 1급',
   '전산세무 2급',
   '전산회계 1급',
   '재경관리사',
-  'AICPA',
-  // 공기업/공무원
-  'NCS 직업기초능력',
+  'AFPK',
+];
+
+export const PUBLIC_CERTIFICATES: string[] = [
   '행정사',
   '사회복지사 1급',
-  // 어학
-  'TEPS 400+',
-  'TEPS 500+',
-  'JLPT N1',
-  'JLPT N2',
-  'HSK 5급',
-  'HSK 6급',
+  '컴퓨터활용능력 1급',
+  '컴퓨터활용능력 2급',
 ];
