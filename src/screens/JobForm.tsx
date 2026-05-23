@@ -371,14 +371,31 @@ function DevForm({ onSubmit }: { onSubmit: (spec: DevJobSpec) => void }) {
               onBlur={e => handleGithubBlur(i, e.target.value)}
               placeholder="https://github.com/..." />
             {p.readmeStatus === 'loading' && <span style={s.readmeBadge}>README 읽는 중...</span>}
-            {p.readmeStatus === 'done' && <span style={{ ...s.readmeBadge, color: colors.green500 }}>✓ README 읽음</span>}
-            {p.readmeStatus === 'error' && <span style={{ ...s.readmeBadge, color: colors.grey600 }}>README 없음</span>}
-            {p.readmeStatus === 'private' && <span style={{ ...s.readmeBadge, color: colors.orange500 }}>비공개 레포</span>}
+            {p.readmeStatus === 'done' && <span style={{ ...s.readmeBadge, color: colors.green500 }}>✓ README 자동 읽음 — 아래 설명 생략 가능</span>}
+            {p.readmeStatus === 'error' && <span style={{ ...s.readmeBadge, color: colors.orange500 }}>⚠ README 없음 — 아래에 직접 입력해주세요</span>}
+            {p.readmeStatus === 'private' && <span style={{ ...s.readmeBadge, color: colors.orange500 }}>⚠ 비공개 레포 — 아래에 직접 입력해주세요</span>}
           </div>
-          <div style={s.inputWrap}>
-            <AutoTextarea label="역할 · 구현 내용 (선택)" value={p.desc}
-              onChange={v => updateProject(i, 'desc', v)} rows={3}
-              placeholder="맡은 역할이나 구현한 내용을 간결하게 적어주세요" />
+          <div style={{
+            ...s.inputWrap,
+            ...((['error', 'private'].includes(p.readmeStatus ?? ''))
+              ? { border: `1px solid ${colors.orange500}` }
+              : {}),
+          }}>
+            <AutoTextarea
+              label={
+                p.readmeStatus === 'done'
+                  ? '역할 · 구현 내용 (선택 — README로 대체됨)'
+                  : '역할 · 구현 내용 (직접 입력)'
+              }
+              value={p.desc}
+              onChange={v => updateProject(i, 'desc', v)}
+              rows={3}
+              placeholder={
+                p.readmeStatus === 'done'
+                  ? 'README에 없는 추가 내용이 있으면 적어주세요'
+                  : '맡은 역할, 기술 스택, 주요 구현 내용을 적어주세요'
+              }
+            />
           </div>
         </div>
       ))}
