@@ -4,6 +4,7 @@ import { colors } from '@toss/tds-colors';
 
 interface Props {
   onStart: () => void;
+  onShowPrevious?: () => void;
 }
 
 const FEATURES = [
@@ -24,7 +25,7 @@ const FEATURES = [
   },
 ];
 
-export default function Intro({ onStart }: Props) {
+export default function Intro({ onStart, onShowPrevious }: Props) {
   return (
     <div style={s.container}>
       <Top title="" />
@@ -52,6 +53,9 @@ export default function Intro({ onStart }: Props) {
       </div>
 
       <div style={s.bottomBar}>
+        {onShowPrevious && (
+          <button style={s.prevBtn} onClick={onShowPrevious}>이전 분석 결과 보기</button>
+        )}
         <button style={s.startBtn} onClick={onStart}>시작하기</button>
       </div>
     </div>
@@ -111,6 +115,18 @@ const s: Record<string, React.CSSProperties> = {
     padding: '12px 24px 28px',
     background: '#fff',
     boxSizing: 'border-box' as const,
+  },
+  prevBtn: {
+    width: '100%',
+    height: 44,
+    background: 'none',
+    color: colors.grey600,
+    border: `1px solid ${colors.grey200}`,
+    borderRadius: 10,
+    fontSize: 14,
+    fontWeight: 500,
+    cursor: 'pointer',
+    marginBottom: 8,
   },
   startBtn: {
     width: '100%',

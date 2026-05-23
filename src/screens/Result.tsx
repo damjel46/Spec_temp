@@ -44,7 +44,9 @@ export default function Result({ result, onRestart, onShare }: Props) {
           <div style={s.timelineWrap}>
             <RoadmapTimeline items={result.roadmap} />
           </div>
-          <p style={s.roadmapLink}>전체 로드맵 보기 &gt;</p>
+          <p style={s.roadmapLink} onClick={() => window.open('https://www.q-net.or.kr/crf005.do', '_blank')}>
+            큐넷에서 자격증 일정 확인하기 &gt;
+          </p>
         </div>
 
         <div style={{ height: 100 }} />
