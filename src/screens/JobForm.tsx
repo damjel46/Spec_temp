@@ -201,6 +201,8 @@ function DevForm({ onSubmit }: { onSubmit: (spec: DevJobSpec) => void }) {
   const [careerLevel, setCareerLevel] = useState<CareerLevel | null>(null);
   const [techInput, setTechInput] = useState('');
   const [techStack, setTechStack] = useState<string[]>([]);
+  const keyCounter = useRef(1);
+  const [projectKeys, setProjectKeys] = useState<number[]>([0]);
   const [projects, setProjects] = useState<ProjectEntry[]>([{ name: '', github: '', desc: '' }]);
   const [notes, setNotes] = useState('');
   const [certificates, setCertificates] = useState<string[]>([]);
@@ -232,8 +234,14 @@ function DevForm({ onSubmit }: { onSubmit: (spec: DevJobSpec) => void }) {
     }));
   };
 
-  const addProject = () => setProjects(prev => [...prev, { name: '', github: '', desc: '' }]);
-  const removeProject = (i: number) => setProjects(prev => prev.filter((_, idx) => idx !== i));
+  const addProject = () => {
+    setProjectKeys(prev => [...prev, keyCounter.current++]);
+    setProjects(prev => [...prev, { name: '', github: '', desc: '' }]);
+  };
+  const removeProject = (i: number) => {
+    setProjectKeys(prev => prev.filter((_, idx) => idx !== i));
+    setProjects(prev => prev.filter((_, idx) => idx !== i));
+  };
 
   const toggleCert = (cert: string) =>
     setCertificates(prev => prev.includes(cert) ? prev.filter(c => c !== cert) : [...prev, cert]);
@@ -273,10 +281,15 @@ function DevForm({ onSubmit }: { onSubmit: (spec: DevJobSpec) => void }) {
 
       <ListHeader title="기술 스택 · 도구" />
       <div style={s.inputWrap}>
-        <TextField variant="line" value={techInput}
-          onChange={e => setTechInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && addTech()}
-          placeholder="예) React, Java, AWS, Docker" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ flex: 1 }}>
+            <TextField variant="line" value={techInput}
+              onChange={e => setTechInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addTech()}
+              placeholder="예) React, Java, AWS, Docker" />
+          </div>
+          <button style={s.techAddBtn} onClick={addTech}>추가</button>
+        </div>
       </div>
       {techStack.length > 0 && (
         <div style={s.tagRow}>
@@ -291,7 +304,7 @@ function DevForm({ onSubmit }: { onSubmit: (spec: DevJobSpec) => void }) {
 
       <ListHeader title="프로젝트 경험 (선택)" />
       {projects.map((p, i) => (
-        <div key={i} style={s.projectCard}>
+        <div key={projectKeys[i]} style={s.projectCard}>
           <div style={s.projectCardHeader}>
             <span style={s.projectTitle}>프로젝트 {i + 1}</span>
             {projects.length > 1 && (
@@ -391,15 +404,17 @@ function BizForm({ onSubmit }: { onSubmit: (spec: BizJobSpec) => void }) {
   return (
     <>
       <ListHeader title="인턴 경험" />
-      <ListRow left={
-        <TextField variant="line" label="인턴 기간 (개월)" value={internMonths}
+      <div style={s.inputWrap}>
+        <span style={s.fieldLabel}>인턴 기간 (개월)</span>
+        <TextField variant="line" value={internMonths}
           onChange={e => setInternMonths(e.target.value)} inputMode="numeric" placeholder="예) 6" />
-      } />
+      </div>
       <ListHeader title="공모전·대외활동" />
-      <ListRow left={
-        <TextField variant="line" label="수상 횟수" value={contestAwards}
+      <div style={s.inputWrap}>
+        <span style={s.fieldLabel}>수상 횟수</span>
+        <TextField variant="line" value={contestAwards}
           onChange={e => setContestAwards(e.target.value)} inputMode="numeric" placeholder="예) 2" />
-      } />
+      </div>
 
       <CertSection
         certificates={certificates}
@@ -515,16 +530,18 @@ function PublicForm({ onSubmit }: { onSubmit: (spec: PublicJobSpec) => void }) {
       </div>
 
       <ListHeader title="한국사능력검정 (선택)" />
-      <ListRow left={
-        <TextField variant="line" label="취득 급수" value={koreanHistoryLevel}
+      <div style={s.inputWrap}>
+        <span style={s.fieldLabel}>취득 급수</span>
+        <TextField variant="line" value={koreanHistoryLevel}
           onChange={e => setKoreanHistoryLevel(e.target.value)} inputMode="numeric" placeholder="예) 1 (1~6급)" />
-      } />
+      </div>
 
       <ListHeader title="목표 공기업" />
-      <ListRow left={
-        <TextField variant="line" label="목표 기관" value={targetPublicType}
+      <div style={s.inputWrap}>
+        <span style={s.fieldLabel}>목표 기관</span>
+        <TextField variant="line" value={targetPublicType}
           onChange={e => setTargetPublicType(e.target.value)} placeholder="예) 한국전력공사, 코레일" />
-      } />
+      </div>
 
       <CertSection
         certificates={certificates}
@@ -563,10 +580,10 @@ function EtcForm({ commonSpec, onSubmit }: { commonSpec: CommonSpec; onSubmit: (
       <ListHeader title="직군 설명" />
       <ListRow left={<span style={s.rowLabel}>{commonSpec.etcJobDesc || '기타 직군'}</span>} />
       <ListHeader title="경력·경험" />
-      <ListRow left={
+      <div style={s.inputWrap}>
         <AutoTextarea label="관련 경험" value={experience} onChange={setExperience}
-          rows={4} placeholder="관련 경험이나 준비 사항을 입력해주세요" />
-      } />
+          rows={5} placeholder="관련 경험이나 준비 사항을 입력해주세요" />
+      </div>
       <div style={s.bottomBar}>
         <button style={s.nextBtn} onClick={() => {
           if (!experience.trim()) { setValidationOpen(true); return; }
@@ -756,8 +773,21 @@ const s: Record<string, React.CSSProperties> = {
     color: colors.blue500,
     fontWeight: 500,
   },
+  techAddBtn: {
+    height: 32,
+    padding: '0 14px',
+    borderRadius: 16,
+    background: colors.blue500,
+    color: '#fff',
+    border: 'none',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: 'pointer',
+    flexShrink: 0,
+    whiteSpace: 'nowrap' as const,
+  },
   certSearchWrap: { padding: '0 16px 8px' },
-  certList: { maxHeight: 320, overflowY: 'auto' as const },
+  certList: { maxHeight: 220, overflowY: 'auto' as const, paddingBottom: 8 },
   noResult: { padding: '16px 24px', fontSize: 14, color: colors.grey600, textAlign: 'center' as const },
   toggleRow: {
     display: 'flex',
