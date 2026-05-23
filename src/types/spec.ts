@@ -3,6 +3,11 @@ export type CompanyType = 'large' | 'mid' | 'startup' | 'public';
 export type EduLevel = 'college' | 'graduate' | 'highschool';
 export type SituationType = 'student' | 'jobseeker' | 'career';
 export type JobType = 'dev' | 'biz' | 'finance' | 'public' | 'etc';
+export type CareerLevel = 'entry' | 'under1' | '1to3' | '3to5' | '5plus';
+export type CodingTestLevel = 'none' | 'basic' | 'intermediate' | 'advanced';
+export type OfficeSkillLevel = 'none' | 'basic' | 'intermediate' | 'advanced';
+export type MajorType = 'engineering' | 'business' | 'humanities' | 'other';
+export type EtcSubCategory = 'service' | 'medical' | 'logistics' | 'education' | 'other';
 
 export interface LanguageEntry {
   test: string;
@@ -23,34 +28,6 @@ export interface CommonSpec {
   etcJobDesc?: string;
 }
 
-export interface DevSpec {
-  codingTestLevel: 'none' | 'bronze' | 'silver' | 'gold' | 'platinum';
-  hasGithub: boolean;
-  projectCount: number;
-  cloudCerts: string[];
-}
-
-export interface BizSpec {
-  internMonths: number;
-  contestAwards: number;
-  hasComputer1st: boolean;
-  hasKoreanHistory: boolean;
-}
-
-export interface FinanceSpec {
-  financeCerts: string[];
-  hasFinanceIntern: boolean;
-  accountingCerts: string[];
-}
-
-export interface PublicSpec {
-  ncsLevel: 'none' | 'basic' | 'intermediate' | 'advanced';
-  koreanHistoryLevel: number;
-  targetPublicType: string;
-}
-
-export type CareerLevel = 'entry' | 'under1' | '1to3' | '3to5' | '5plus';
-
 export interface ProjectEntry {
   name: string;
   github: string;
@@ -61,6 +38,9 @@ export interface ProjectEntry {
 
 export interface DevJobSpec {
   careerLevel: CareerLevel;
+  codingTest: CodingTestLevel;
+  githubActive: boolean;
+  internMonths: number;
   techStack: string[];
   projects: ProjectEntry[];
   notes: string;
@@ -68,6 +48,8 @@ export interface DevJobSpec {
 }
 
 export interface BizJobSpec {
+  bizRole: string;
+  officeSkill: OfficeSkillLevel;
   internMonths: number;
   contestAwards: number;
   certificates: string[];
@@ -76,18 +58,36 @@ export interface BizJobSpec {
 export interface FinanceJobSpec {
   certificates: string[];
   hasFinanceIntern: boolean;
+  financeContest: boolean;
+  financeClub: boolean;
 }
 
 export interface PublicJobSpec {
   ncsLevel: 'none' | 'basic' | 'intermediate' | 'advanced';
   koreanHistoryLevel: number;
   targetPublicType: string;
+  majorType: MajorType;
+  volunteerHours: number;
+  publicIntern: boolean;
   certificates: string[];
 }
 
 export interface EtcJobSpec {
   jobDesc: string;
+  etcSubCategory: EtcSubCategory;
+  certificates: string[];
   experience: string;
+  // 서비스업
+  speakingGrade?: string;
+  serviceMonths?: number;
+  // 의료·보건
+  hasNationalLicense?: boolean;
+  hospitalMonths?: number;
+  // 유통·물류
+  logisticsMonths?: number;
+  // 교육
+  hasTeacherLicense?: boolean;
+  teachingMonths?: number;
 }
 
 export type JobSpec = DevJobSpec | BizJobSpec | FinanceJobSpec | PublicJobSpec | EtcJobSpec;

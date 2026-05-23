@@ -10,8 +10,8 @@ import {
   ProgressStep,
 } from '@toss/tds-mobile';
 import { colors } from '@toss/tds-colors';
-import { CommonSpec, JobSpec, DevJobSpec, BizJobSpec, FinanceJobSpec, PublicJobSpec, EtcJobSpec, CareerLevel, ProjectEntry } from '../types/spec';
-import { DEV_CERTIFICATES, BIZ_CERTIFICATES, FINANCE_CERTIFICATES, PUBLIC_CERTIFICATES } from '../constants/jobTypes';
+import { CommonSpec, JobSpec, DevJobSpec, BizJobSpec, FinanceJobSpec, PublicJobSpec, EtcJobSpec, CareerLevel, ProjectEntry, CodingTestLevel, OfficeSkillLevel, MajorType, EtcSubCategory } from '../types/spec';
+import { DEV_CERTIFICATES, BIZ_CERTIFICATES, FINANCE_CERTIFICATES, PUBLIC_CERTIFICATES, ETC_CERTIFICATES, BIZ_ROLES } from '../constants/jobTypes';
 
 const ChevronRight = () => (
   <svg width="8" height="14" viewBox="0 0 8 14" fill="none">
@@ -197,8 +197,18 @@ function CertSection({ certificates, certList, onToggle, onAddCustom }: CertSect
 }
 
 /* ──────────── Dev Form ──────────── */
+const CODING_TEST_LEVELS: { label: string; value: CodingTestLevel }[] = [
+  { label: '없음', value: 'none' },
+  { label: '기초', value: 'basic' },
+  { label: '중급', value: 'intermediate' },
+  { label: '고급', value: 'advanced' },
+];
+
 function DevForm({ onSubmit }: { onSubmit: (spec: DevJobSpec) => void }) {
   const [careerLevel, setCareerLevel] = useState<CareerLevel | null>(null);
+  const [codingTest, setCodingTest] = useState<CodingTestLevel | null>(null);
+  const [githubActive, setGithubActive] = useState<boolean | null>(null);
+  const [internMonths, setInternMonths] = useState('');
   const [techInput, setTechInput] = useState('');
   const [techStack, setTechStack] = useState<string[]>([]);
   const keyCounter = useRef(1);
@@ -252,13 +262,24 @@ function DevForm({ onSubmit }: { onSubmit: (spec: DevJobSpec) => void }) {
   const getMissingFields = () => {
     const missing: string[] = [];
     if (!careerLevel) missing.push('경력');
+    if (codingTest === null) missing.push('코딩테스트 준비');
+    if (githubActive === null) missing.push('GitHub 활동');
     if (techStack.length === 0) missing.push('기술 스택 · 도구');
     return missing;
   };
 
   const handleSubmit = () => {
     if (getMissingFields().length > 0) { setValidationOpen(true); return; }
-    onSubmit({ careerLevel: careerLevel!, techStack, projects: projects.filter(p => p.name.trim()), notes, certificates });
+    onSubmit({
+      careerLevel: careerLevel!,
+      codingTest: codingTest!,
+      githubActive: githubActive!,
+      internMonths: parseInt(internMonths || '0', 10),
+      techStack,
+      projects: projects.filter(p => p.name.trim()),
+      notes,
+      certificates,
+    });
   };
 
   return (
@@ -278,6 +299,32 @@ function DevForm({ onSubmit }: { onSubmit: (spec: DevJobSpec) => void }) {
           </div>
         }
       />
+
+      <ListHeader title="코딩테스트 준비" />
+      <div style={s.toggleRow}>
+        {CODING_TEST_LEVELS.map(lv => (
+          <button key={lv.value}
+            style={{ ...s.toggleBtn, ...(codingTest === lv.value ? s.toggleBtnActive : {}) }}
+            onClick={() => setCodingTest(lv.value)}>
+            {lv.label}
+          </button>
+        ))}
+      </div>
+
+      <ListHeader title="GitHub 꾸준한 활동" />
+      <div style={s.toggleRow}>
+        <button style={{ ...s.toggleBtn, ...(githubActive === true ? s.toggleBtnActive : {}) }}
+          onClick={() => setGithubActive(true)}>예, 활동 중</button>
+        <button style={{ ...s.toggleBtn, ...(githubActive === false ? s.toggleBtnActive : {}) }}
+          onClick={() => setGithubActive(false)}>거의 없음</button>
+      </div>
+
+      <ListHeader title="인턴·현장실습 경험 (선택)" />
+      <div style={s.inputWrap}>
+        <span style={s.fieldLabel}>경험 기간 (개월, 없으면 0)</span>
+        <TextField variant="line" value={internMonths}
+          onChange={e => setInternMonths(e.target.value)} inputMode="numeric" placeholder="예) 6" />
+      </div>
 
       <ListHeader title="기술 스택 · 도구" />
       <div style={s.inputWrap}>
@@ -380,8 +427,18 @@ function DevForm({ onSubmit }: { onSubmit: (spec: DevJobSpec) => void }) {
   );
 }
 
+const OFFICE_SKILL_LEVELS: { label: string; value: OfficeSkillLevel }[] = [
+  { label: '기초', value: 'none' },
+  { label: '중급', value: 'basic' },
+  { label: '고급', value: 'intermediate' },
+  { label: 'VBA 가능', value: 'advanced' },
+];
+
 /* ──────────── Biz Form ──────────── */
 function BizForm({ onSubmit }: { onSubmit: (spec: BizJobSpec) => void }) {
+  const [bizRole, setBizRole] = useState('');
+  const [bizRoleSheetOpen, setBizRoleSheetOpen] = useState(false);
+  const [officeSkill, setOfficeSkill] = useState<OfficeSkillLevel | null>(null);
   const [internMonths, setInternMonths] = useState('');
   const [contestAwards, setContestAwards] = useState('');
   const [certificates, setCertificates] = useState<string[]>([]);
@@ -393,8 +450,18 @@ function BizForm({ onSubmit }: { onSubmit: (spec: BizJobSpec) => void }) {
   const addCustomCert = (cert: string) =>
     setCertificates(prev => prev.includes(cert) ? prev : [...prev, cert]);
 
+  const getMissingFields = () => {
+    const missing: string[] = [];
+    if (!bizRole) missing.push('희망 직무');
+    if (officeSkill === null) missing.push('오피스 스킬');
+    return missing;
+  };
+
   const handleSubmit = () => {
+    if (getMissingFields().length > 0) { setValidationOpen(true); return; }
     onSubmit({
+      bizRole,
+      officeSkill: officeSkill!,
       internMonths: parseInt(internMonths || '0', 10),
       contestAwards: parseInt(contestAwards || '0', 10),
       certificates,
@@ -403,13 +470,32 @@ function BizForm({ onSubmit }: { onSubmit: (spec: BizJobSpec) => void }) {
 
   return (
     <>
-      <ListHeader title="인턴 경험" />
+      <ListHeader title="희망 직무" />
+      <ListRow
+        onClick={() => setBizRoleSheetOpen(true)}
+        left={<span style={bizRole ? s.selectedValue : s.rowLabel}>{bizRole || '직무 선택'}</span>}
+        right={<div style={s.rowRight}><span style={s.placeholderValue}>선택</span><ChevronRight /></div>}
+      />
+
+      <ListHeader title="오피스 스킬 (엑셀)" />
+      <div style={s.toggleRow}>
+        {OFFICE_SKILL_LEVELS.map(lv => (
+          <button key={lv.value}
+            style={{ ...s.toggleBtn, ...(officeSkill === lv.value ? s.toggleBtnActive : {}) }}
+            onClick={() => setOfficeSkill(lv.value)}>
+            {lv.label}
+          </button>
+        ))}
+      </div>
+
+      <ListHeader title="인턴 경험 (선택)" />
       <div style={s.inputWrap}>
-        <span style={s.fieldLabel}>인턴 기간 (개월)</span>
+        <span style={s.fieldLabel}>인턴 기간 (개월, 없으면 0)</span>
         <TextField variant="line" value={internMonths}
           onChange={e => setInternMonths(e.target.value)} inputMode="numeric" placeholder="예) 6" />
       </div>
-      <ListHeader title="공모전·대외활동" />
+
+      <ListHeader title="공모전·대외활동 (선택)" />
       <div style={s.inputWrap}>
         <span style={s.fieldLabel}>수상 횟수</span>
         <TextField variant="line" value={contestAwards}
@@ -427,10 +513,22 @@ function BizForm({ onSubmit }: { onSubmit: (spec: BizJobSpec) => void }) {
         <button style={s.nextBtn} onClick={handleSubmit}>분석 시작하기</button>
       </div>
 
+      <BottomSheet open={bizRoleSheetOpen} onDimmerClick={() => setBizRoleSheetOpen(false)}>
+        <BottomSheet.Header>희망 직무 선택</BottomSheet.Header>
+        {BIZ_ROLES.map(r => (
+          <ListRow key={r.value}
+            onClick={() => { setBizRole(r.value); setBizRoleSheetOpen(false); }}
+            left={<span style={s.rowLabel}>{r.label}</span>}
+            right={bizRole === r.value ? <span style={s.checkmark}>✓</span> : null} />
+        ))}
+      </BottomSheet>
+
       <BottomSheet open={validationOpen} onDimmerClick={() => setValidationOpen(false)}>
         <BottomSheet.Header>입력하지 않은 항목이 있어요</BottomSheet.Header>
         <div style={{ padding: '8px 24px 16px' }}>
-          <div style={s.missingItem}><span style={s.missingDot}>•</span><span style={s.missingText}>입력 항목을 확인해주세요</span></div>
+          {getMissingFields().map(f => (
+            <div key={f} style={s.missingItem}><span style={s.missingDot}>•</span><span style={s.missingText}>{f}</span></div>
+          ))}
         </div>
         <BottomSheet.CTA onClick={() => setValidationOpen(false)}>확인</BottomSheet.CTA>
       </BottomSheet>
@@ -441,7 +539,9 @@ function BizForm({ onSubmit }: { onSubmit: (spec: BizJobSpec) => void }) {
 /* ──────────── Finance Form ──────────── */
 function FinanceForm({ onSubmit }: { onSubmit: (spec: FinanceJobSpec) => void }) {
   const [certificates, setCertificates] = useState<string[]>([]);
-  const [hasFinanceIntern, setHasFinanceIntern] = useState<'yes' | 'no' | null>(null);
+  const [hasFinanceIntern, setHasFinanceIntern] = useState<boolean | null>(null);
+  const [financeContest, setFinanceContest] = useState<boolean | null>(null);
+  const [financeClub, setFinanceClub] = useState<boolean | null>(null);
   const [validationOpen, setValidationOpen] = useState(false);
 
   const toggleCert = (cert: string) =>
@@ -449,6 +549,14 @@ function FinanceForm({ onSubmit }: { onSubmit: (spec: FinanceJobSpec) => void })
 
   const addCustomCert = (cert: string) =>
     setCertificates(prev => prev.includes(cert) ? prev : [...prev, cert]);
+
+  const getMissingFields = () => {
+    const missing: string[] = [];
+    if (hasFinanceIntern === null) missing.push('금융권 인턴 경험');
+    if (financeContest === null) missing.push('금융 공모전·리포트 경험');
+    if (financeClub === null) missing.push('금융 학회·동아리');
+    return missing;
+  };
 
   return (
     <>
@@ -461,31 +569,41 @@ function FinanceForm({ onSubmit }: { onSubmit: (spec: FinanceJobSpec) => void })
 
       <ListHeader title="금융권 인턴 경험" />
       <div style={s.toggleRow}>
-        <button
-          style={{ ...s.toggleBtn, ...(hasFinanceIntern === 'yes' ? s.toggleBtnActive : {}) }}
-          onClick={() => setHasFinanceIntern('yes')}
-        >
-          경험 있음
-        </button>
-        <button
-          style={{ ...s.toggleBtn, ...(hasFinanceIntern === 'no' ? s.toggleBtnActive : {}) }}
-          onClick={() => setHasFinanceIntern('no')}
-        >
-          경험 없음
-        </button>
+        <button style={{ ...s.toggleBtn, ...(hasFinanceIntern === true ? s.toggleBtnActive : {}) }}
+          onClick={() => setHasFinanceIntern(true)}>경험 있음</button>
+        <button style={{ ...s.toggleBtn, ...(hasFinanceIntern === false ? s.toggleBtnActive : {}) }}
+          onClick={() => setHasFinanceIntern(false)}>경험 없음</button>
+      </div>
+
+      <ListHeader title="금융 공모전·리포트 경험" />
+      <div style={s.toggleRow}>
+        <button style={{ ...s.toggleBtn, ...(financeContest === true ? s.toggleBtnActive : {}) }}
+          onClick={() => setFinanceContest(true)}>있음</button>
+        <button style={{ ...s.toggleBtn, ...(financeContest === false ? s.toggleBtnActive : {}) }}
+          onClick={() => setFinanceContest(false)}>없음</button>
+      </div>
+
+      <ListHeader title="금융 학회·동아리 활동" />
+      <div style={s.toggleRow}>
+        <button style={{ ...s.toggleBtn, ...(financeClub === true ? s.toggleBtnActive : {}) }}
+          onClick={() => setFinanceClub(true)}>활동 있음</button>
+        <button style={{ ...s.toggleBtn, ...(financeClub === false ? s.toggleBtnActive : {}) }}
+          onClick={() => setFinanceClub(false)}>없음</button>
       </div>
 
       <div style={s.bottomBar}>
         <button style={s.nextBtn} onClick={() => {
-          if (hasFinanceIntern === null) { setValidationOpen(true); return; }
-          onSubmit({ certificates, hasFinanceIntern: hasFinanceIntern === 'yes' });
+          if (getMissingFields().length > 0) { setValidationOpen(true); return; }
+          onSubmit({ certificates, hasFinanceIntern: hasFinanceIntern!, financeContest: financeContest!, financeClub: financeClub! });
         }}>분석 시작하기</button>
       </div>
 
       <BottomSheet open={validationOpen} onDimmerClick={() => setValidationOpen(false)}>
         <BottomSheet.Header>입력하지 않은 항목이 있어요</BottomSheet.Header>
         <div style={{ padding: '8px 24px 16px' }}>
-          <div style={s.missingItem}><span style={s.missingDot}>•</span><span style={s.missingText}>금융권 인턴 경험 여부</span></div>
+          {getMissingFields().map(f => (
+            <div key={f} style={s.missingItem}><span style={s.missingDot}>•</span><span style={s.missingText}>{f}</span></div>
+          ))}
         </div>
         <BottomSheet.CTA onClick={() => setValidationOpen(false)}>확인</BottomSheet.CTA>
       </BottomSheet>
@@ -493,11 +611,21 @@ function FinanceForm({ onSubmit }: { onSubmit: (spec: FinanceJobSpec) => void })
   );
 }
 
+const MAJOR_TYPES: { label: string; value: MajorType }[] = [
+  { label: '이공계', value: 'engineering' },
+  { label: '상경계', value: 'business' },
+  { label: '인문계', value: 'humanities' },
+  { label: '기타', value: 'other' },
+];
+
 /* ──────────── Public Form ──────────── */
 function PublicForm({ onSubmit }: { onSubmit: (spec: PublicJobSpec) => void }) {
   const [ncsLevel, setNcsLevel] = useState<'none' | 'basic' | 'intermediate' | 'advanced' | null>(null);
   const [koreanHistoryLevel, setKoreanHistoryLevel] = useState('');
   const [targetPublicType, setTargetPublicType] = useState('');
+  const [majorType, setMajorType] = useState<MajorType | null>(null);
+  const [volunteerHours, setVolunteerHours] = useState('');
+  const [publicIntern, setPublicIntern] = useState<boolean | null>(null);
   const [certificates, setCertificates] = useState<string[]>([]);
   const [validationOpen, setValidationOpen] = useState(false);
 
@@ -511,6 +639,8 @@ function PublicForm({ onSubmit }: { onSubmit: (spec: PublicJobSpec) => void }) {
     const missing: string[] = [];
     if (ncsLevel === null) missing.push('NCS 준비 수준');
     if (!targetPublicType.trim()) missing.push('목표 공기업');
+    if (majorType === null) missing.push('전공 계열');
+    if (publicIntern === null) missing.push('공공기관 인턴');
     return missing;
   };
 
@@ -519,21 +649,45 @@ function PublicForm({ onSubmit }: { onSubmit: (spec: PublicJobSpec) => void }) {
       <ListHeader title="NCS 준비 수준" />
       <div style={s.toggleRow}>
         {NCS_LEVELS.map(n => (
-          <button
-            key={n.value}
+          <button key={n.value}
             style={{ ...s.toggleBtn, ...(ncsLevel === n.value ? s.toggleBtnActive : {}) }}
-            onClick={() => setNcsLevel(n.value)}
-          >
+            onClick={() => setNcsLevel(n.value)}>
             {n.label}
+          </button>
+        ))}
+      </div>
+
+      <ListHeader title="전공 계열" />
+      <div style={s.toggleRow}>
+        {MAJOR_TYPES.map(m => (
+          <button key={m.value}
+            style={{ ...s.toggleBtn, ...(majorType === m.value ? s.toggleBtnActive : {}) }}
+            onClick={() => setMajorType(m.value)}>
+            {m.label}
           </button>
         ))}
       </div>
 
       <ListHeader title="한국사능력검정 (선택)" />
       <div style={s.inputWrap}>
-        <span style={s.fieldLabel}>취득 급수</span>
+        <span style={s.fieldLabel}>취득 급수 (없으면 0)</span>
         <TextField variant="line" value={koreanHistoryLevel}
           onChange={e => setKoreanHistoryLevel(e.target.value)} inputMode="numeric" placeholder="예) 1 (1~6급)" />
+      </div>
+
+      <ListHeader title="봉사활동 경험 (선택)" />
+      <div style={s.inputWrap}>
+        <span style={s.fieldLabel}>봉사 시간 (없으면 0)</span>
+        <TextField variant="line" value={volunteerHours}
+          onChange={e => setVolunteerHours(e.target.value)} inputMode="numeric" placeholder="예) 40" />
+      </div>
+
+      <ListHeader title="공공기관 인턴 경험" />
+      <div style={s.toggleRow}>
+        <button style={{ ...s.toggleBtn, ...(publicIntern === true ? s.toggleBtnActive : {}) }}
+          onClick={() => setPublicIntern(true)}>경험 있음</button>
+        <button style={{ ...s.toggleBtn, ...(publicIntern === false ? s.toggleBtnActive : {}) }}
+          onClick={() => setPublicIntern(false)}>경험 없음</button>
       </div>
 
       <ListHeader title="목표 공기업" />
@@ -553,7 +707,15 @@ function PublicForm({ onSubmit }: { onSubmit: (spec: PublicJobSpec) => void }) {
       <div style={s.bottomBar}>
         <button style={s.nextBtn} onClick={() => {
           if (getMissingFields().length > 0) { setValidationOpen(true); return; }
-          onSubmit({ ncsLevel: ncsLevel!, koreanHistoryLevel: parseInt(koreanHistoryLevel || '0', 10), targetPublicType, certificates });
+          onSubmit({
+            ncsLevel: ncsLevel!,
+            koreanHistoryLevel: parseInt(koreanHistoryLevel || '0', 10),
+            targetPublicType,
+            majorType: majorType!,
+            volunteerHours: parseInt(volunteerHours || '0', 10),
+            publicIntern: publicIntern!,
+            certificates,
+          });
         }}>분석 시작하기</button>
       </div>
 
@@ -570,30 +732,173 @@ function PublicForm({ onSubmit }: { onSubmit: (spec: PublicJobSpec) => void }) {
   );
 }
 
+const ETC_SUB_CATEGORIES: { label: string; value: EtcSubCategory }[] = [
+  { label: '서비스업', value: 'service' },
+  { label: '의료·보건', value: 'medical' },
+  { label: '유통·물류', value: 'logistics' },
+  { label: '교육', value: 'education' },
+  { label: '기타', value: 'other' },
+];
+
 /* ──────────── Etc Form ──────────── */
 function EtcForm({ commonSpec, onSubmit }: { commonSpec: CommonSpec; onSubmit: (spec: EtcJobSpec) => void }) {
+  const [etcSubCategory, setEtcSubCategory] = useState<EtcSubCategory | null>(null);
+  const [certificates, setCertificates] = useState<string[]>([]);
   const [experience, setExperience] = useState('');
   const [validationOpen, setValidationOpen] = useState(false);
 
+  // 서비스업
+  const [speakingGrade, setSpeakingGrade] = useState('');
+  const [serviceMonths, setServiceMonths] = useState('');
+  // 의료·보건
+  const [hasNationalLicense, setHasNationalLicense] = useState<boolean | null>(null);
+  const [hospitalMonths, setHospitalMonths] = useState('');
+  // 유통·물류
+  const [logisticsMonths, setLogisticsMonths] = useState('');
+  // 교육
+  const [hasTeacherLicense, setHasTeacherLicense] = useState<boolean | null>(null);
+  const [teachingMonths, setTeachingMonths] = useState('');
+
+  const toggleCert = (cert: string) =>
+    setCertificates(prev => prev.includes(cert) ? prev.filter(c => c !== cert) : [...prev, cert]);
+  const addCustomCert = (cert: string) =>
+    setCertificates(prev => prev.includes(cert) ? prev : [...prev, cert]);
+
+  const certList = etcSubCategory ? (ETC_CERTIFICATES[etcSubCategory] ?? []) : [];
+
+  const getMissingFields = () => {
+    const missing: string[] = [];
+    if (!etcSubCategory) missing.push('세부 분야');
+    if (!experience.trim()) missing.push('관련 경험');
+    if (etcSubCategory === 'medical' && hasNationalLicense === null) missing.push('국가면허 보유 여부');
+    return missing;
+  };
+
+  const handleSubmit = () => {
+    if (getMissingFields().length > 0) { setValidationOpen(true); return; }
+    const base: EtcJobSpec = {
+      jobDesc: commonSpec.etcJobDesc ?? '',
+      etcSubCategory: etcSubCategory!,
+      certificates,
+      experience,
+    };
+    if (etcSubCategory === 'service') {
+      base.speakingGrade = speakingGrade;
+      base.serviceMonths = parseInt(serviceMonths || '0', 10);
+    } else if (etcSubCategory === 'medical') {
+      base.hasNationalLicense = hasNationalLicense!;
+      base.hospitalMonths = parseInt(hospitalMonths || '0', 10);
+    } else if (etcSubCategory === 'logistics') {
+      base.logisticsMonths = parseInt(logisticsMonths || '0', 10);
+    } else if (etcSubCategory === 'education') {
+      base.hasTeacherLicense = hasTeacherLicense ?? false;
+      base.teachingMonths = parseInt(teachingMonths || '0', 10);
+    }
+    onSubmit(base);
+  };
+
   return (
     <>
-      <ListHeader title="직군 설명" />
-      <ListRow left={<span style={s.rowLabel}>{commonSpec.etcJobDesc || '기타 직군'}</span>} />
+      <ListHeader title="세부 분야 선택" />
+      <div style={s.toggleRow}>
+        {ETC_SUB_CATEGORIES.map(c => (
+          <button key={c.value}
+            style={{ ...s.toggleBtn, ...(etcSubCategory === c.value ? s.toggleBtnActive : {}) }}
+            onClick={() => { setEtcSubCategory(c.value); setCertificates([]); }}>
+            {c.label}
+          </button>
+        ))}
+      </div>
+
+      {etcSubCategory === 'service' && (
+        <>
+          <ListHeader title="어학 스피킹 등급 (선택)" />
+          <div style={s.inputWrap}>
+            <span style={s.fieldLabel}>오픽/토스 등급</span>
+            <TextField variant="line" value={speakingGrade}
+              onChange={e => setSpeakingGrade(e.target.value)} placeholder="예) 오픽 IH, 토스 Level 6" />
+          </div>
+          <ListHeader title="서비스업 경험 (선택)" />
+          <div style={s.inputWrap}>
+            <span style={s.fieldLabel}>경험 기간 (개월, 없으면 0)</span>
+            <TextField variant="line" value={serviceMonths}
+              onChange={e => setServiceMonths(e.target.value)} inputMode="numeric" placeholder="예) 12" />
+          </div>
+        </>
+      )}
+
+      {etcSubCategory === 'medical' && (
+        <>
+          <ListHeader title="국가면허 보유 여부" />
+          <div style={s.toggleRow}>
+            <button style={{ ...s.toggleBtn, ...(hasNationalLicense === true ? s.toggleBtnActive : {}) }}
+              onClick={() => setHasNationalLicense(true)}>보유</button>
+            <button style={{ ...s.toggleBtn, ...(hasNationalLicense === false ? s.toggleBtnActive : {}) }}
+              onClick={() => setHasNationalLicense(false)}>미보유 (준비 중)</button>
+          </div>
+          <ListHeader title="병원·임상 실습 경험 (선택)" />
+          <div style={s.inputWrap}>
+            <span style={s.fieldLabel}>실습 기간 (개월, 없으면 0)</span>
+            <TextField variant="line" value={hospitalMonths}
+              onChange={e => setHospitalMonths(e.target.value)} inputMode="numeric" placeholder="예) 6" />
+          </div>
+        </>
+      )}
+
+      {etcSubCategory === 'logistics' && (
+        <>
+          <ListHeader title="현장·인턴 경험 (선택)" />
+          <div style={s.inputWrap}>
+            <span style={s.fieldLabel}>경험 기간 (개월, 없으면 0)</span>
+            <TextField variant="line" value={logisticsMonths}
+              onChange={e => setLogisticsMonths(e.target.value)} inputMode="numeric" placeholder="예) 6" />
+          </div>
+        </>
+      )}
+
+      {etcSubCategory === 'education' && (
+        <>
+          <ListHeader title="교원자격증 보유 여부 (선택)" />
+          <div style={s.toggleRow}>
+            <button style={{ ...s.toggleBtn, ...(hasTeacherLicense === true ? s.toggleBtnActive : {}) }}
+              onClick={() => setHasTeacherLicense(true)}>보유</button>
+            <button style={{ ...s.toggleBtn, ...(hasTeacherLicense === false ? s.toggleBtnActive : {}) }}
+              onClick={() => setHasTeacherLicense(false)}>없음</button>
+          </div>
+          <ListHeader title="강사 경험 (선택)" />
+          <div style={s.inputWrap}>
+            <span style={s.fieldLabel}>경험 기간 (개월, 없으면 0)</span>
+            <TextField variant="line" value={teachingMonths}
+              onChange={e => setTeachingMonths(e.target.value)} inputMode="numeric" placeholder="예) 12" />
+          </div>
+        </>
+      )}
+
+      {certList.length > 0 && (
+        <CertSection
+          certificates={certificates}
+          certList={certList}
+          onToggle={toggleCert}
+          onAddCustom={addCustomCert}
+        />
+      )}
+
       <ListHeader title="경력·경험" />
       <div style={s.inputWrap}>
-        <AutoTextarea label="관련 경험" value={experience} onChange={setExperience}
+        <AutoTextarea label="관련 경험 요약" value={experience} onChange={setExperience}
           rows={5} placeholder="관련 경험이나 준비 사항을 입력해주세요" />
       </div>
+
       <div style={s.bottomBar}>
-        <button style={s.nextBtn} onClick={() => {
-          if (!experience.trim()) { setValidationOpen(true); return; }
-          onSubmit({ jobDesc: commonSpec.etcJobDesc ?? '', experience });
-        }}>분석 시작하기</button>
+        <button style={s.nextBtn} onClick={handleSubmit}>분석 시작하기</button>
       </div>
+
       <BottomSheet open={validationOpen} onDimmerClick={() => setValidationOpen(false)}>
         <BottomSheet.Header>입력하지 않은 항목이 있어요</BottomSheet.Header>
         <div style={{ padding: '8px 24px 16px' }}>
-          <div style={s.missingItem}><span style={s.missingDot}>•</span><span style={s.missingText}>관련 경험</span></div>
+          {getMissingFields().map(f => (
+            <div key={f} style={s.missingItem}><span style={s.missingDot}>•</span><span style={s.missingText}>{f}</span></div>
+          ))}
         </div>
         <BottomSheet.CTA onClick={() => setValidationOpen(false)}>확인</BottomSheet.CTA>
       </BottomSheet>
