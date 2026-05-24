@@ -52,6 +52,10 @@ export default function Intro({ onStart, onShowPrevious }: Props) {
         ))}
       </div>
 
+      <p style={s.privacyNotice}>
+        입력하신 정보는 서버에 저장되지 않으며, AI 분석을 위해 OpenAI에 전송 후 즉시 삭제됩니다.
+      </p>
+
       <div style={s.bottomBar}>
         {onShowPrevious && (
           <button style={s.prevBtn} onClick={onShowPrevious}>이전 분석 결과 보기</button>
@@ -138,6 +142,13 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 17,
     fontWeight: 700,
     cursor: 'pointer',
+  },
+  privacyNotice: {
+    margin: '8px 24px 0',
+    fontSize: 11,
+    color: colors.grey600,
+    textAlign: 'center' as const,
+    lineHeight: 1.5,
   },
   features: {
     padding: '8px 24px',
