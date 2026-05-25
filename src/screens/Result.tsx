@@ -5,6 +5,8 @@ import { AnalysisResult } from '../types/spec';
 import CircularGauge from '../components/CircularGauge';
 import SpecBarChart from '../components/SpecBarChart';
 import RoadmapTimeline from '../components/RoadmapTimeline';
+import { useAd } from '../hooks/useAd';
+import { getQnetSearchUrl } from '../api/qnet';
 
 interface Props {
   result: AnalysisResult;
@@ -13,6 +15,23 @@ interface Props {
 }
 
 export default function Result({ result, onRestart, onShare }: Props) {
+  const { adStatus, showAd } = useAd();
+
+  /**
+   * "다시 분석하기" 클릭 시:
+   * - 광고가 로드돼 있으면 광고 시청 후 재시작
+   * - 광고 미로드 시 바로 재시작
+   *
+   * 앱인토스 광고 정책: 사용자 액션 후 노출 (예상치 못한 시점 금지)
+   */
+  const handleRestart = () => {
+    if (adStatus === 'loaded') {
+      showAd(onRestart);
+    } else {
+      onRestart();
+    }
+  };
+
   return (
     <div style={s.container}>
       <div style={s.scrollContent}>
@@ -44,9 +63,15 @@ export default function Result({ result, onRestart, onShare }: Props) {
           <div style={s.timelineWrap}>
             <RoadmapTimeline items={result.roadmap} />
           </div>
-          <p style={s.roadmapLink} onClick={() => window.open('https://www.q-net.or.kr/crf005.do', '_blank')}>
-            큐넷에서 자격증 일정 확인하기 &gt;
-          </p>
+          {result.roadmap.map((item) => (
+            <p
+              key={item.stage}
+              style={s.roadmapLink}
+              onClick={() => window.open(getQnetSearchUrl(item.name), '_blank')}
+            >
+              {item.name} 일정 큐넷에서 확인하기 &gt;
+            </p>
+          ))}
         </div>
 
         <div style={{ height: 100 }} />
@@ -54,7 +79,12 @@ export default function Result({ result, onRestart, onShare }: Props) {
 
       {/* 하단 더블 버튼 */}
       <div style={s.bottomActions}>
-        <button style={s.outlineBtn} onClick={onRestart}>다시 분석하기</button>
+        <div style={s.restartWrap}>
+          {adStatus === 'loaded' && (
+            <p style={s.adLabel}>광고</p>
+          )}
+          <button style={s.outlineBtn} onClick={handleRestart}>다시 분석하기</button>
+        </div>
         <button style={s.primaryBtn} onClick={onShare}>결과 공유하기</button>
       </div>
 
@@ -128,8 +158,24 @@ const s: Record<string, React.CSSProperties> = {
     display: 'flex',
     gap: 8,
   },
-  outlineBtn: {
+  restartWrap: {
     flex: 1,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: 4,
+  },
+  adLabel: {
+    margin: 0,
+    fontSize: 10,
+    color: colors.grey600,
+    border: `1px solid ${colors.grey600}`,
+    borderRadius: 2,
+    padding: '0 4px',
+    lineHeight: 1.6,
+  },
+  outlineBtn: {
+    width: '100%',
     height: 52,
     border: `1.5px solid ${colors.blue500}`,
     borderRadius: 10,

@@ -4,3 +4,9 @@ node_modules/
 dist/
 build/
 .claude/settings.local.json
+
+# 앱인토스 빌드 산출물 (ait build 결과)
+*.ait
+.granite/
+
+.vercel
