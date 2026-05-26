@@ -30,6 +30,21 @@ const SYSTEM_PROMPT = `당신은 취업 스펙 분석 전문가입니다. 사용
 - 의료의 경우 hasNationalLicense(국가면허) 보유 여부 최우선 반영
 - 교육의 경우 hasTeacherLicense 반영
 
+## strengths (강점) 작성 기준
+- 사용자 스펙에서 실제로 뛰어난 항목 3개를 구체적으로 서술
+- 추상적 칭찬 금지. 자격증명·기술명·수치를 포함할 것 (예: "SQLD+ADsP 조합으로 데이터 직군 자격증 평균 이상")
+
+## weaknesses (보완점) 작성 기준
+- 합격에 가장 시급한 보완 항목 3개, 해결 방향을 한 줄로 함께 제시 (예: "토익 미보유 → 서류 탈락 위험, 750점 이상 필수")
+
+## positioningTip 작성 기준
+- 입력된 기술스택·자격증·경험을 종합해 어떤 직무·포지션으로 어필하면 가장 강한지 1~2문장
+
+## actionPlan 작성 기준
+- urgency 4단계: immediate(지금 즉시), short(2개월 내), mid(3~5개월), long(하반기 이후)
+- 총 5~6개 항목, 우선순위 순서로 배열
+- label은 8자 이내 핵심 행동, detail은 이유 한 줄
+
 반드시 아래 JSON 형식으로만 응답하세요:
 {
   "score": 숫자(0~100, 합격 가능성),
@@ -46,6 +61,15 @@ const SYSTEM_PROMPT = `당신은 취업 스펙 분석 전문가입니다. 사용
     { "stage": 1, "period": "0~3개월", "name": "자격증명", "desc": "취득 이유와 방법" },
     { "stage": 2, "period": "3~6개월", "name": "자격증명", "desc": "취득 이유와 방법" },
     { "stage": 3, "period": "6~12개월", "name": "자격증명", "desc": "취득 이유와 방법" }
+  ],
+  "strengths": ["구체적 강점 1", "구체적 강점 2", "구체적 강점 3"],
+  "weaknesses": ["보완 필요 항목 1 → 해결 방향", "보완 필요 항목 2 → 해결 방향", "보완 필요 항목 3 → 해결 방향"],
+  "positioningTip": "직무 포지셔닝 조언 1~2문장",
+  "actionPlan": [
+    { "urgency": "immediate", "label": "행동 라벨", "detail": "이유 한 줄" },
+    { "urgency": "short", "label": "행동 라벨", "detail": "이유 한 줄" },
+    { "urgency": "mid", "label": "행동 라벨", "detail": "이유 한 줄" },
+    { "urgency": "long", "label": "행동 라벨", "detail": "이유 한 줄" }
   ]
 }
 
@@ -80,7 +104,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           { role: 'user', content: JSON.stringify({ commonSpec, jobSpec }) },
         ],
         response_format: { type: 'json_object' },
-        max_tokens: 2000,
+        max_tokens: 3000,
       }),
     });
 

@@ -10,6 +10,11 @@ import { CommonSpec, JobSpec, AnalysisResult } from './types/spec';
 type Screen = 'intro' | 'common' | 'job' | 'loading' | 'result';
 
 const STORAGE_KEY = 'spec_last_result';
+const SPEC_KEY = 'spec_input';
+
+function saveSpec(cs: CommonSpec | null, js: JobSpec | null) {
+  try { localStorage.setItem(SPEC_KEY, JSON.stringify({ commonSpec: cs, jobSpec: js })); } catch { /* ignore */ }
+}
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('intro');
@@ -20,14 +25,20 @@ export default function App() {
   const [copiedOpen, setCopiedOpen] = useState(false);
   const [prevResult, setPrevResult] = useState<AnalysisResult | null>(null);
 
-  // 이전 결과 로드
+  // 이전 결과 및 입력 스펙 복원
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) setPrevResult(JSON.parse(saved));
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
+    try {
+      const savedSpec = localStorage.getItem(SPEC_KEY);
+      if (savedSpec) {
+        const { commonSpec: cs, jobSpec: js } = JSON.parse(savedSpec);
+        if (cs) setCommonSpec(cs);
+        if (js) setJobSpec(js);
+      }
+    } catch { /* ignore */ }
   }, []);
 
   const handleDone = (r: AnalysisResult) => {
@@ -76,7 +87,7 @@ export default function App() {
     return (
       <CommonForm
         initialData={commonSpec ?? undefined}
-        onNext={(spec) => { setCommonSpec(spec); setScreen('job'); }}
+        onNext={(spec) => { setCommonSpec(spec); saveSpec(spec, jobSpec); setScreen('job'); }}
       />
     );
   }
@@ -85,7 +96,7 @@ export default function App() {
     return (
       <JobForm
         commonSpec={commonSpec!}
-        onNext={(cs, js) => { setCommonSpec(cs); setJobSpec(js); setScreen('loading'); }}
+        onNext={(cs, js) => { setCommonSpec(cs); setJobSpec(js); saveSpec(cs, js); setScreen('loading'); }}
         onBack={() => setScreen('common')}
       />
     );
@@ -107,14 +118,14 @@ export default function App() {
       <>
         <Result
           result={result}
-          onRestart={() => { setCommonSpec(null); setJobSpec(null); setResult(null); setScreen('intro'); }}
+          onRestart={() => { setResult(null); setScreen('intro'); }}
           onShare={handleShare}
         />
         {/* 복사 완료 BottomSheet */}
         <BottomSheet open={copiedOpen} onDimmerClick={() => setCopiedOpen(false)}>
-          <BottomSheet.Header>결과가 복사됐어요 ✓</BottomSheet.Header>
+          <BottomSheet.Header>이미지가 저장됐어요 ✓</BottomSheet.Header>
           <div style={{ padding: '8px 24px 16px', fontSize: 14, color: '#6b7684' }}>
-            카카오톡, 메시지 등에 붙여넣기 하세요.
+            갤러리에서 확인하거나 카카오톡에 바로 공유하세요.
           </div>
           <BottomSheet.CTA onClick={() => setCopiedOpen(false)}>확인</BottomSheet.CTA>
         </BottomSheet>

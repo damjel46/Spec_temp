@@ -110,6 +110,12 @@ export interface CertExamSchedule {
   pracExamStartDt?: string;
 }
 
+export interface ActionPlanItem {
+  urgency: 'immediate' | 'short' | 'mid' | 'long';
+  label: string;
+  detail: string;
+}
+
 export interface AnalysisResult {
   score: number;
   grade: string;
@@ -127,4 +133,8 @@ export interface AnalysisResult {
     name: string;
     desc: string;
   }>;
+  strengths: string[];
+  weaknesses: string[];
+  positioningTip: string;
+  actionPlan: ActionPlanItem[];
 }

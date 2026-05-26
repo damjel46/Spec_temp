@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Top, ListHeader, Border } from '@toss/tds-mobile';
 import { colors } from '@toss/tds-colors';
-import { AnalysisResult, CertExamSchedule } from '../types/spec';
+import { AnalysisResult, ActionPlanItem, CertExamSchedule } from '../types/spec';
 import { CERT_CODE_MAP } from '../constants/certCodeMap';
 import { fetchNextExamSchedule } from '../api/examSchedule';
 import CircularGauge from '../components/CircularGauge';
 import SpecBarChart from '../components/SpecBarChart';
 import RoadmapTimeline from '../components/RoadmapTimeline';
+import ShareCard from '../components/ShareCard';
 import { useAd } from '../hooks/useAd';
 import { getQnetSearchUrl } from '../api/qnet';
 
@@ -19,6 +20,8 @@ interface Props {
 export default function Result({ result, onRestart, onShare }: Props) {
   const { adStatus, showAd } = useAd();
   const [schedules, setSchedules] = useState<(CertExamSchedule | null)[]>([]);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,8 +51,37 @@ export default function Result({ result, onRestart, onShare }: Props) {
     }
   };
 
+  const handleShareImage = async () => {
+    if (!cardRef.current || isCapturing) return;
+    setIsCapturing(true);
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true, logging: false });
+      const blob = await new Promise<Blob>((res) => canvas.toBlob((b) => res(b!), 'image/png'));
+      const file = new File([blob], '스펙온도_결과.png', { type: 'image/png' });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: '내 스펙 온도 분석 결과' });
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = '스펙온도_결과.png';
+        a.click();
+        URL.revokeObjectURL(url);
+        onShare();
+      }
+    } catch {
+      // 사용자가 공유 취소한 경우 등 — 무시
+    } finally {
+      setIsCapturing(false);
+    }
+  };
+
   return (
     <div style={s.container}>
+      {/* 캡처 전용 카드 — 화면 밖에 렌더 */}
+      <ShareCard ref={cardRef} result={result} />
+
       <div style={s.scrollContent}>
         <Top title="분석 결과" />
 
@@ -63,6 +95,19 @@ export default function Result({ result, onRestart, onShare }: Props) {
 
         <Border />
 
+        {/* 직무 포지셔닝 인사이트 */}
+        {result.positioningTip && (
+          <>
+            <div style={s.section}>
+              <ListHeader title="💡 직무 포지셔닝" />
+              <div style={s.tipBox}>
+                <p style={s.tipText}>{result.positioningTip}</p>
+              </div>
+            </div>
+            <Border />
+          </>
+        )}
+
         {/* 스펙 점수 */}
         <div style={s.section}>
           <ListHeader title="스펙 점수" />
@@ -72,6 +117,37 @@ export default function Result({ result, onRestart, onShare }: Props) {
         </div>
 
         <Border />
+
+        {/* 강점 & 보완점 */}
+        {(result.strengths?.length > 0 || result.weaknesses?.length > 0) && (
+          <>
+            <div style={s.section}>
+              {result.strengths?.length > 0 && (
+                <>
+                  <ListHeader title="✅ 강점" />
+                  {result.strengths.map((item, i) => (
+                    <div key={i} style={s.swRow}>
+                      <span style={{ ...s.dot, background: colors.green500 }} />
+                      <p style={s.swText}>{item}</p>
+                    </div>
+                  ))}
+                </>
+              )}
+              {result.weaknesses?.length > 0 && (
+                <>
+                  <ListHeader title="🔧 보완 필요" />
+                  {result.weaknesses.map((item, i) => (
+                    <div key={i} style={s.swRow}>
+                      <span style={{ ...s.dot, background: colors.orange500 }} />
+                      <p style={s.swText}>{item}</p>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+            <Border />
+          </>
+        )}
 
         {/* 맞춤 인증 로드맵 */}
         <div style={s.section}>
@@ -90,6 +166,27 @@ export default function Result({ result, onRestart, onShare }: Props) {
           ))}
         </div>
 
+        {/* 지금 해야 할 일 */}
+        {result.actionPlan?.length > 0 && (
+          <>
+            <Border />
+            <div style={s.section}>
+              <ListHeader title="🗓 지금 해야 할 일" />
+              {result.actionPlan.map((item, i) => (
+                <div key={i} style={s.actionRow}>
+                  <span style={{ ...s.urgencyBadge, background: URGENCY_COLOR[item.urgency] }}>
+                    {URGENCY_LABEL[item.urgency]}
+                  </span>
+                  <div style={s.actionContent}>
+                    <p style={s.actionLabel}>{item.label}</p>
+                    <p style={s.actionDetail}>{item.detail}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
         <div style={{ height: 100 }} />
       </div>
 
@@ -101,7 +198,9 @@ export default function Result({ result, onRestart, onShare }: Props) {
           )}
           <button style={s.outlineBtn} onClick={handleRestart}>다시 분석하기</button>
         </div>
-        <button style={s.primaryBtn} onClick={onShare}>결과 공유하기</button>
+        <button style={{ ...s.primaryBtn, opacity: isCapturing ? 0.7 : 1 }} onClick={handleShareImage} disabled={isCapturing}>
+          {isCapturing ? '이미지 생성 중...' : '결과 이미지 저장'}
+        </button>
       </div>
 
       {/* AI 면책 문구 */}
@@ -111,6 +210,20 @@ export default function Result({ result, onRestart, onShare }: Props) {
     </div>
   );
 }
+
+const URGENCY_LABEL: Record<ActionPlanItem['urgency'], string> = {
+  immediate: '즉시',
+  short: '2개월',
+  mid: '5개월',
+  long: '하반기',
+};
+
+const URGENCY_COLOR: Record<ActionPlanItem['urgency'], string> = {
+  immediate: colors.red500,
+  short: colors.orange500,
+  mid: colors.blue500,
+  long: colors.green500,
+};
 
 const s: Record<string, React.CSSProperties> = {
   container: {
@@ -211,6 +324,71 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 16,
     fontWeight: 600,
     cursor: 'pointer',
+  },
+  tipBox: {
+    margin: '0 24px 16px',
+    padding: '14px 16px',
+    background: `${colors.blue500}14`,
+    borderRadius: 10,
+    borderLeft: `3px solid ${colors.blue500}`,
+  },
+  tipText: {
+    margin: 0,
+    fontSize: 14,
+    color: colors.grey900,
+    lineHeight: 1.6,
+  },
+  swRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 10,
+    padding: '10px 24px',
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: '50%',
+    flexShrink: 0,
+    marginTop: 5,
+  },
+  swText: {
+    margin: 0,
+    fontSize: 14,
+    color: colors.grey900,
+    lineHeight: 1.55,
+    flex: 1,
+  },
+  actionRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 12,
+    padding: '12px 24px',
+    borderBottom: `1px solid ${colors.grey100}`,
+  },
+  urgencyBadge: {
+    flexShrink: 0,
+    fontSize: 11,
+    fontWeight: 700,
+    color: '#fff',
+    borderRadius: 6,
+    padding: '3px 8px',
+    marginTop: 1,
+    whiteSpace: 'nowrap' as const,
+  },
+  actionContent: {
+    flex: 1,
+  },
+  actionLabel: {
+    margin: '0 0 2px',
+    fontSize: 14,
+    fontWeight: 600,
+    color: colors.grey900,
+  },
+  actionDetail: {
+    margin: 0,
+    fontSize: 12,
+    color: colors.grey600,
+    lineHeight: 1.5,
   },
   disclaimer: {
     position: 'fixed',
