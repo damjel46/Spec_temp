@@ -10,6 +10,7 @@ import RoadmapTimeline from '../components/RoadmapTimeline';
 import ShareCard from '../components/ShareCard';
 import { useAd } from '../hooks/useAd';
 import { getQnetSearchUrl } from '../api/qnet';
+import { getScoreTier } from '../utils/scoreTier';
 
 interface Props {
   result: AnalysisResult;
@@ -77,7 +78,7 @@ export default function Result({ result, onRestart, onShare }: Props) {
 
         {/* 합격 가능성 */}
         <div style={s.gaugeSection}>
-          <p style={s.sectionTitle}>합격 가능성</p>
+          <p style={s.sectionTitle}>{getScoreTier(result.score)}</p>
           <CircularGauge score={result.score} />
           <p style={s.grade}>{result.grade}</p>
           <p style={s.gradeDesc}>{result.gradeDesc}</p>

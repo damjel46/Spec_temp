@@ -1,5 +1,6 @@
 import React from 'react';
 import { AnalysisResult } from '../types/spec';
+import { getScoreTier } from '../utils/scoreTier';
 
 interface Props {
   result: AnalysisResult;
@@ -59,14 +60,13 @@ const ShareCard = React.forwardRef<HTMLDivElement, Props>(({ result }, ref) => {
         }}>
           {result.score}%
         </div>
-        <div style={{ fontSize: 13, color: '#6b7684', marginTop: 6 }}>합격 가능성</div>
         <div style={{
-          fontSize: 20,
+          fontSize: 18,
           fontWeight: 700,
-          color: '#191f28',
-          marginTop: 12,
+          color: scoreColor,
+          marginTop: 10,
         }}>
-          {result.grade}
+          {getScoreTier(result.score)}
         </div>
       </div>
 
