@@ -10,7 +10,7 @@ import {
   ProgressStep,
 } from '@toss/tds-mobile';
 import { colors } from '@toss/tds-colors';
-import { CommonSpec, JobSpec, DevJobSpec, BizJobSpec, FinanceJobSpec, PublicJobSpec, EtcJobSpec, CareerLevel, ProjectEntry, CodingTestLevel, OfficeSkillLevel, MajorType, EtcSubCategory } from '../types/spec';
+import { CommonSpec, JobSpec, DevJobSpec, BizJobSpec, FinanceJobSpec, PublicInfo, EtcJobSpec, CareerLevel, ProjectEntry, CodingTestLevel, OfficeSkillLevel, MajorType, EtcSubCategory } from '../types/spec';
 import { DEV_CERTIFICATES, BIZ_CERTIFICATES, FINANCE_CERTIFICATES, PUBLIC_CERTIFICATES, ETC_CERTIFICATES, BIZ_ROLES } from '../constants/jobTypes';
 
 const ChevronRight = () => (
@@ -35,7 +35,6 @@ const JOB_TYPE_LABELS: Record<string, { label: string; emoji: string }> = {
   dev: { label: '개발 (Development)', emoji: '💻' },
   biz: { label: '경영·사무', emoji: '📋' },
   finance: { label: '금융·회계', emoji: '💰' },
-  public: { label: '공기업', emoji: '🏛️' },
   etc: { label: '기타', emoji: '✨' },
 };
 
@@ -204,7 +203,7 @@ const CODING_TEST_LEVELS: { label: string; value: CodingTestLevel }[] = [
   { label: '고급', value: 'advanced' },
 ];
 
-function DevForm({ onSubmit }: { onSubmit: (spec: DevJobSpec) => void }) {
+function DevForm({ onSubmit, isPublicCompany }: { onSubmit: (spec: DevJobSpec) => void; isPublicCompany?: boolean }) {
   const [careerLevel, setCareerLevel] = useState<CareerLevel | null>(null);
   const [codingTest, setCodingTest] = useState<CodingTestLevel | null>(null);
   const [githubActive, setGithubActive] = useState<boolean | null>(null);
@@ -415,7 +414,7 @@ function DevForm({ onSubmit }: { onSubmit: (spec: DevJobSpec) => void }) {
       </div>
 
       <div style={s.bottomBar}>
-        <button style={s.nextBtn} onClick={handleSubmit}>분석 시작하기</button>
+        <button style={s.nextBtn} onClick={handleSubmit}>{isPublicCompany ? '다음 (공기업 정보)' : '분석 시작하기'}</button>
       </div>
 
       <BottomSheet open={careerSheetOpen} onDimmerClick={() => setCareerSheetOpen(false)}>
@@ -452,7 +451,7 @@ const OFFICE_SKILL_LEVELS: { label: string; value: OfficeSkillLevel }[] = [
 ];
 
 /* ──────────── Biz Form ──────────── */
-function BizForm({ onSubmit }: { onSubmit: (spec: BizJobSpec) => void }) {
+function BizForm({ onSubmit, isPublicCompany }: { onSubmit: (spec: BizJobSpec) => void; isPublicCompany?: boolean }) {
   const [bizRole, setBizRole] = useState('');
   const [bizRoleSheetOpen, setBizRoleSheetOpen] = useState(false);
   const [officeSkill, setOfficeSkill] = useState<OfficeSkillLevel | null>(null);
@@ -527,7 +526,7 @@ function BizForm({ onSubmit }: { onSubmit: (spec: BizJobSpec) => void }) {
       />
 
       <div style={s.bottomBar}>
-        <button style={s.nextBtn} onClick={handleSubmit}>분석 시작하기</button>
+        <button style={s.nextBtn} onClick={handleSubmit}>{isPublicCompany ? '다음 (공기업 정보)' : '분석 시작하기'}</button>
       </div>
 
       <BottomSheet open={bizRoleSheetOpen} onDimmerClick={() => setBizRoleSheetOpen(false)}>
@@ -554,7 +553,7 @@ function BizForm({ onSubmit }: { onSubmit: (spec: BizJobSpec) => void }) {
 }
 
 /* ──────────── Finance Form ──────────── */
-function FinanceForm({ onSubmit }: { onSubmit: (spec: FinanceJobSpec) => void }) {
+function FinanceForm({ onSubmit, isPublicCompany }: { onSubmit: (spec: FinanceJobSpec) => void; isPublicCompany?: boolean }) {
   const [certificates, setCertificates] = useState<string[]>([]);
   const [hasFinanceIntern, setHasFinanceIntern] = useState<boolean | null>(null);
   const [financeContest, setFinanceContest] = useState<boolean | null>(null);
@@ -612,7 +611,7 @@ function FinanceForm({ onSubmit }: { onSubmit: (spec: FinanceJobSpec) => void })
         <button style={s.nextBtn} onClick={() => {
           if (getMissingFields().length > 0) { setValidationOpen(true); return; }
           onSubmit({ certificates, hasFinanceIntern: hasFinanceIntern!, financeContest: financeContest!, financeClub: financeClub! });
-        }}>분석 시작하기</button>
+        }}>{isPublicCompany ? '다음 (공기업 정보)' : '분석 시작하기'}</button>
       </div>
 
       <BottomSheet open={validationOpen} onDimmerClick={() => setValidationOpen(false)}>
@@ -636,7 +635,7 @@ const MAJOR_TYPES: { label: string; value: MajorType }[] = [
 ];
 
 /* ──────────── Public Form ──────────── */
-function PublicForm({ onSubmit }: { onSubmit: (spec: PublicJobSpec) => void }) {
+function PublicForm({ onSubmit }: { onSubmit: (spec: PublicInfo) => void }) {
   const [ncsLevel, setNcsLevel] = useState<'none' | 'basic' | 'intermediate' | 'advanced' | null>(null);
   const [koreanHistoryLevel, setKoreanHistoryLevel] = useState('');
   const [targetPublicType, setTargetPublicType] = useState('');
@@ -758,7 +757,7 @@ const ETC_SUB_CATEGORIES: { label: string; value: EtcSubCategory }[] = [
 ];
 
 /* ──────────── Etc Form ──────────── */
-function EtcForm({ commonSpec, onSubmit }: { commonSpec: CommonSpec; onSubmit: (spec: EtcJobSpec) => void }) {
+function EtcForm({ commonSpec, onSubmit, isPublicCompany }: { commonSpec: CommonSpec; onSubmit: (spec: EtcJobSpec) => void; isPublicCompany?: boolean }) {
   const [etcSubCategory, setEtcSubCategory] = useState<EtcSubCategory | null>(null);
   const [certificates, setCertificates] = useState<string[]>([]);
   const [experience, setExperience] = useState('');
@@ -907,7 +906,7 @@ function EtcForm({ commonSpec, onSubmit }: { commonSpec: CommonSpec; onSubmit: (
       </div>
 
       <div style={s.bottomBar}>
-        <button style={s.nextBtn} onClick={handleSubmit}>분석 시작하기</button>
+        <button style={s.nextBtn} onClick={handleSubmit}>{isPublicCompany ? '다음 (공기업 정보)' : '분석 시작하기'}</button>
       </div>
 
       <BottomSheet open={validationOpen} onDimmerClick={() => setValidationOpen(false)}>
@@ -925,45 +924,82 @@ function EtcForm({ commonSpec, onSubmit }: { commonSpec: CommonSpec; onSubmit: (
 
 /* ──────────── Main JobForm ──────────── */
 export default function JobForm({ commonSpec, onNext, onBack }: Props) {
-  const jobInfo = JOB_TYPE_LABELS[commonSpec.jobType] ?? { label: '기타', emoji: '✨' };
+  const [pendingJobSpec, setPendingJobSpec] = useState<JobSpec | null>(null);
+  const [showPublicStep, setShowPublicStep] = useState(false);
 
-  const handleSubmit = (jobSpec: JobSpec) => onNext(commonSpec, jobSpec);
+  const jobInfo = JOB_TYPE_LABELS[commonSpec.jobType] ?? { label: '기타', emoji: '✨' };
+  const isPublicCompany = commonSpec.targetCompany === 'public';
+
+  const handleJobSubmit = (jobSpec: JobSpec) => {
+    if (isPublicCompany) {
+      setPendingJobSpec(jobSpec);
+      setShowPublicStep(true);
+    } else {
+      onNext(commonSpec, jobSpec);
+    }
+  };
+
+  const handlePublicSubmit = (publicInfo: PublicInfo) => {
+    onNext(commonSpec, { ...pendingJobSpec!, publicInfo });
+  };
 
   return (
     <div style={s.container}>
       <div style={s.scrollContent}>
         <div style={s.backBar}>
-          <button style={s.backBtn} onClick={onBack}>
+          <button style={s.backBtn} onClick={showPublicStep ? () => setShowPublicStep(false) : onBack}>
             <BackIcon />
           </button>
         </div>
-        <Top
-          subtitleTop={<span style={{ color: colors.blue500, fontSize: 13, fontWeight: 600 }}>STEP 2</span>}
-          title="직군 정보 입력"
-          subtitleBottom={<span style={{ color: colors.grey600 }}>직무 관련 정보를 입력해주세요</span>}
-        />
 
-        <ProgressStepper variant="compact" activeStepIndex={1} style={s.stepper}>
-          <ProgressStep title="기본 정보" />
-          <ProgressStep title="직군 정보" />
-        </ProgressStepper>
+        {!showPublicStep ? (
+          <>
+            <Top
+              subtitleTop={<span style={{ color: colors.blue500, fontSize: 13, fontWeight: 600 }}>STEP 2</span>}
+              title="직군 정보 입력"
+              subtitleBottom={<span style={{ color: colors.grey600 }}>직무 관련 정보를 입력해주세요</span>}
+            />
 
-        <ListHeader title="직무 분야" />
-        <ListRow
-          left={
-            <div style={s.jobBadge}>
-              <span>{jobInfo.emoji}</span>
-              <span style={s.jobBadgeText}>{jobInfo.label}</span>
-            </div>
-          }
-        />
-        <Border />
+            <ProgressStepper variant="compact" activeStepIndex={1} style={s.stepper}>
+              <ProgressStep title="기본 정보" />
+              <ProgressStep title="직군 정보" />
+              {isPublicCompany && <ProgressStep title="공기업 정보" />}
+            </ProgressStepper>
 
-        {commonSpec.jobType === 'dev' && <DevForm onSubmit={handleSubmit} />}
-        {commonSpec.jobType === 'biz' && <BizForm onSubmit={handleSubmit} />}
-        {commonSpec.jobType === 'finance' && <FinanceForm onSubmit={handleSubmit} />}
-        {commonSpec.jobType === 'public' && <PublicForm onSubmit={handleSubmit} />}
-        {commonSpec.jobType === 'etc' && <EtcForm commonSpec={commonSpec} onSubmit={handleSubmit} />}
+            <ListHeader title="직무 분야" />
+            <ListRow
+              left={
+                <div style={s.jobBadge}>
+                  <span>{jobInfo.emoji}</span>
+                  <span style={s.jobBadgeText}>{jobInfo.label}</span>
+                </div>
+              }
+            />
+            <Border />
+
+            {commonSpec.jobType === 'dev' && <DevForm onSubmit={handleJobSubmit} isPublicCompany={isPublicCompany} />}
+            {commonSpec.jobType === 'biz' && <BizForm onSubmit={handleJobSubmit} isPublicCompany={isPublicCompany} />}
+            {commonSpec.jobType === 'finance' && <FinanceForm onSubmit={handleJobSubmit} isPublicCompany={isPublicCompany} />}
+            {commonSpec.jobType === 'etc' && <EtcForm commonSpec={commonSpec} onSubmit={handleJobSubmit} isPublicCompany={isPublicCompany} />}
+          </>
+        ) : (
+          <>
+            <Top
+              subtitleTop={<span style={{ color: colors.blue500, fontSize: 13, fontWeight: 600 }}>STEP 3</span>}
+              title="공기업 정보 입력"
+              subtitleBottom={<span style={{ color: colors.grey600 }}>공기업 지원에 필요한 정보를 입력해주세요</span>}
+            />
+
+            <ProgressStepper variant="compact" activeStepIndex={2} style={s.stepper}>
+              <ProgressStep title="기본 정보" />
+              <ProgressStep title="직군 정보" />
+              <ProgressStep title="공기업 정보" />
+            </ProgressStepper>
+
+            <Border />
+            <PublicForm onSubmit={handlePublicSubmit} />
+          </>
+        )}
       </div>
     </div>
   );

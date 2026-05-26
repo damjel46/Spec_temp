@@ -15,5 +15,12 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    proxy: {
+      '/qnet-api': {
+        target: 'https://apis.data.go.kr',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/qnet-api/, ''),
+      },
+    },
   },
 });

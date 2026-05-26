@@ -17,7 +17,6 @@ export const JOB_TYPES: { label: string; value: JobType }[] = [
   { label: '개발·IT', value: 'dev' },
   { label: '경영·사무', value: 'biz' },
   { label: '금융·회계', value: 'finance' },
-  { label: '공기업', value: 'public' },
   { label: '기타', value: 'etc' },
 ];
 

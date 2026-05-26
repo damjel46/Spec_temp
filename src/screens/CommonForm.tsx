@@ -43,7 +43,7 @@ const getLevels = (test: string) => test === 'JLPT' ? JLPT_LEVELS : test === 'HS
 const LABEL: Record<string, Record<string, string>> = {
   situation: { student: '재학중', jobseeker: '취업준비', career: '이직' },
   company: { large: '대기업', mid: '중견기업', startup: '스타트업', public: '공기업' },
-  job: { dev: '개발·IT', biz: '경영·사무', finance: '금융·회계', public: '공기업', etc: '기타' },
+  job: { dev: '개발·IT', biz: '경영·사무', finance: '금융·회계', etc: '기타' },
 };
 
 

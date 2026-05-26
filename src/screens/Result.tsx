@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Top, ListHeader, Border } from '@toss/tds-mobile';
 import { colors } from '@toss/tds-colors';
-import { AnalysisResult } from '../types/spec';
+import { AnalysisResult, CertExamSchedule } from '../types/spec';
+import { CERT_CODE_MAP } from '../constants/certCodeMap';
+import { fetchNextExamSchedule } from '../api/examSchedule';
 import CircularGauge from '../components/CircularGauge';
 import SpecBarChart from '../components/SpecBarChart';
 import RoadmapTimeline from '../components/RoadmapTimeline';
@@ -16,14 +18,28 @@ interface Props {
 
 export default function Result({ result, onRestart, onShare }: Props) {
   const { adStatus, showAd } = useAd();
+  const [schedules, setSchedules] = useState<(CertExamSchedule | null)[]>([]);
 
-  /**
-   * "다시 분석하기" 클릭 시:
-   * - 광고가 로드돼 있으면 광고 시청 후 재시작
-   * - 광고 미로드 시 바로 재시작
-   *
-   * 앱인토스 광고 정책: 사용자 액션 후 노출 (예상치 못한 시점 금지)
-   */
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const results = await Promise.all(
+        result.roadmap.map(async (item) => {
+          const entry = CERT_CODE_MAP[item.name];
+          if (!entry) return null;
+          try {
+            return await fetchNextExamSchedule(entry.jmCd, entry.qualgbCd);
+          } catch {
+            return null;
+          }
+        }),
+      );
+      if (!cancelled) setSchedules(results);
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
   const handleRestart = () => {
     if (adStatus === 'loaded') {
       showAd(onRestart);
@@ -61,7 +77,7 @@ export default function Result({ result, onRestart, onShare }: Props) {
         <div style={s.section}>
           <ListHeader title="맞춤 인증 로드맵" />
           <div style={s.timelineWrap}>
-            <RoadmapTimeline items={result.roadmap} />
+            <RoadmapTimeline items={result.roadmap} schedules={schedules} />
           </div>
           {result.roadmap.map((item) => (
             <p

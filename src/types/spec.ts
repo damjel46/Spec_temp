@@ -2,7 +2,7 @@ export type OPICLevel = 'NL' | 'NM' | 'NH' | 'IL' | 'IM1' | 'IM2' | 'IM3' | 'IH'
 export type CompanyType = 'large' | 'mid' | 'startup' | 'public';
 export type EduLevel = 'college' | 'graduate' | 'highschool';
 export type SituationType = 'student' | 'jobseeker' | 'career';
-export type JobType = 'dev' | 'biz' | 'finance' | 'public' | 'etc';
+export type JobType = 'dev' | 'biz' | 'finance' | 'etc';
 export type CareerLevel = 'entry' | 'under1' | '1to3' | '3to5' | '5plus';
 export type CodingTestLevel = 'none' | 'basic' | 'intermediate' | 'advanced';
 export type OfficeSkillLevel = 'none' | 'basic' | 'intermediate' | 'advanced';
@@ -45,6 +45,7 @@ export interface DevJobSpec {
   projects: ProjectEntry[];
   notes: string;
   certificates: string[];
+  publicInfo?: PublicInfo;
 }
 
 export interface BizJobSpec {
@@ -53,6 +54,7 @@ export interface BizJobSpec {
   internMonths: number;
   contestAwards: number;
   certificates: string[];
+  publicInfo?: PublicInfo;
 }
 
 export interface FinanceJobSpec {
@@ -60,9 +62,10 @@ export interface FinanceJobSpec {
   hasFinanceIntern: boolean;
   financeContest: boolean;
   financeClub: boolean;
+  publicInfo?: PublicInfo;
 }
 
-export interface PublicJobSpec {
+export interface PublicInfo {
   ncsLevel: 'none' | 'basic' | 'intermediate' | 'advanced';
   koreanHistoryLevel: number;
   targetPublicType: string;
@@ -88,9 +91,18 @@ export interface EtcJobSpec {
   // 교육
   hasTeacherLicense?: boolean;
   teachingMonths?: number;
+  publicInfo?: PublicInfo;
 }
 
-export type JobSpec = DevJobSpec | BizJobSpec | FinanceJobSpec | PublicJobSpec | EtcJobSpec;
+export type JobSpec = DevJobSpec | BizJobSpec | FinanceJobSpec | EtcJobSpec;
+
+export interface CertExamSchedule {
+  implYy: string;
+  implSeq: number;
+  description: string;
+  docExamStartDt?: string;
+  pracExamStartDt?: string;
+}
 
 export interface AnalysisResult {
   score: number;
