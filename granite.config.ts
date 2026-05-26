@@ -2,7 +2,7 @@ import { defineConfig } from '@apps-in-toss/web-framework/config';
 
 export default defineConfig({
   // 앱 표시 이름 (앱인토스 콘솔 등록 명과 동일하게)
-  appName: '스펙-온도',
+  appName: 'spectemp',
 
   // 브랜드 정보 — 로딩/런처 화면에 표시
   brand: {

@@ -33,79 +33,181 @@ export const OPIC_LEVELS: { label: string; value: OPICLevel }[] = [
 ];
 
 export const DEV_CERTIFICATES: string[] = [
-  '정보처리기사',
+  // 국가기술자격
+  '정보처리기능사',
   '정보처리산업기사',
-  '정보보안기사',
+  '정보처리기사',
   '정보보안산업기사',
+  '정보보안기사',
+  '빅데이터분석기사',
+  '정보통신기사',
+  // DB
   'SQLD',
   'SQLP',
   'ADsP',
   'ADP',
+  'OCP(Oracle Certified Professional)',
+  'MongoDB Associate',
+  // 네트워크
   '네트워크관리사 2급',
-  '리눅스마스터 1급',
-  '리눅스마스터 2급',
+  '네트워크관리사 1급',
+  'CCNA',
+  'CCNP',
+  // AWS
   'AWS Solutions Architect',
+  'AWS Solutions Architect Professional',
   'AWS Developer',
-  'GCP Associate',
+  'AWS SysOps Administrator',
+  // Azure
   'Azure Fundamentals',
+  'Azure Administrator(AZ-104)',
+  'Azure Solutions Architect Expert(AZ-305)',
+  // GCP
+  'GCP Associate',
+  'GCP Professional',
+  // Container / Kubernetes
   'Docker',
   'Kubernetes(CKA)',
-  'CCNA',
+  'CKAD',
+  'CKS',
+  // 국내 클라우드
+  'NCP(네이버클라우드 Associate)',
+  'NCA(네이버클라우드 Architect)',
+  // 리눅스
+  '리눅스마스터 2급',
+  '리눅스마스터 1급',
+  // 기타
+  'ISTQB',
+  'Terraform Associate',
 ];
 
 export const BIZ_CERTIFICATES: string[] = [
+  // OA
   '컴퓨터활용능력 1급',
   '컴퓨터활용능력 2급',
   '워드프로세서',
   '사무자동화산업기사',
+  '사무자동화기능사',
   'MOS Master',
+  'ITQ Master',
+  'GTQ 1급',
+  'ICDL',
+  // 데이터·분석
   'ADsP',
+  '사회조사분석사 2급',
+  // 회계·세무
   '전산회계 1급',
   '전산세무 2급',
+  '재경관리사',
+  // ERP
   'ERP정보관리사 1급',
+  'ERP인사정보관리사 1급',
+  'ERP물류정보관리사',
+  // 유통·물류
   '유통관리사 2급',
+  '유통관리사 1급',
   '물류관리사',
+  '전자상거래관리사 2급',
+  '전자상거래관리사 1급',
+  // 마케팅·서비스
   'SMAT 1급',
+  // 한국사
   '한국사능력검정 1급',
   '한국사능력검정 2급',
   '한국사능력검정 3급',
+  // 국어·문서
+  'KBS한국어능력시험',
+  '국어능력인증시험(ToKL)',
+  '한국실용글쓰기',
+  // 비서
   '비서 1급',
   '비서 2급',
 ];
 
 export const FINANCE_CERTIFICATES: string[] = [
+  // CFA 계열
   'CFA Level 1',
   'CFA Level 2',
   'CFA Level 3',
+  '국제공인투자분석사(CIIA)',
+  // 투자·운용
   '투자자산운용사',
-  '재무위험관리사(FRM)',
-  '공인회계사(CPA)',
-  '세무사',
-  'AICPA',
-  'AFPK',
-  '신용분석사',
+  '파생상품투자권유자문인력',
   '증권투자권유자문인력',
   '펀드투자권유자문인력',
+  '채권분석사',
+  '금융투자분석사(CRA)',
+  // 리스크·신용
+  '재무위험관리사(FRM)',
+  'PRM',
+  '신용분석사',
+  '신용위험분석사',
+  // 회계·세무
+  '공인회계사(CPA)',
+  'AICPA',
+  '세무사',
+  // 재무·기획
   '재경관리사',
+  'AFPK',
+  'CFP(국제공인재무설계사)',
+  // 보험
+  '보험계리사',
+  '손해사정사',
+  '보험심사역(CPCM)',
+  // 부동산·기타
+  '감정평가사',
+  '공인중개사',
+  '외환관리사',
+  'ISA',
+  // 전산
   '전산세무 1급',
   '전산세무 2급',
   '전산회계 1급',
 ];
 
 export const PUBLIC_CERTIFICATES: string[] = [
+  // IT·데이터
   '정보처리기사',
-  '컴퓨터활용능력 1급',
-  '컴퓨터활용능력 2급',
+  '정보통신기사',
+  '빅데이터분석기사',
+  // 전기
   '전기기사',
+  '전기산업기사',
+  // 안전
+  '산업안전기사',
+  '산업안전산업기사',
+  // 소방
+  '소방설비기사',
+  '소방설비산업기사',
+  // 건설·토목
   '토목기사',
   '건축기사',
+  '도시계획기사',
+  // 기계
   '기계기사',
-  '화학분석기사',
+  // 환경
   '환경기사',
+  '대기환경기사',
+  '수질환경기사',
+  // 화학·가스
+  '화학분석기사',
+  '가스기사',
   '위험물산업기사',
+  // 품질·측량
+  '품질경영기사',
+  '측량및지형공간정보기사',
+  // OA·회계·행정
+  '컴퓨터활용능력 1급',
+  '컴퓨터활용능력 2급',
+  '전산세무 1급',
+  '전산회계 1급',
+  '재경관리사',
+  // 한국어
   '한국어능력시험 1급',
+  // 운전·복지·행정
   '운전면허 1종 보통',
   '사회복지사 1급',
+  '사회복지사 2급',
   '행정사',
 ];
 

@@ -16,6 +16,7 @@ import { SITUATION_TYPES, TARGET_COMPANY_TYPES, JOB_TYPES } from '../constants/j
 
 interface Props {
   onNext: (commonSpec: CommonSpec) => void;
+  initialData?: CommonSpec;
 }
 
 const LANGUAGE_TESTS = [
@@ -65,25 +66,31 @@ const EDU_TABS: { value: EduLevel; label: string }[] = [
   { value: 'highschool', label: '고등학교' },
 ];
 
-export default function CommonForm({ onNext }: Props) {
-  const [eduLevel, setEduLevel] = useState<EduLevel>('college');
-  const [schoolName, setSchoolName] = useState('');
-  const [major, setMajor] = useState('');
-  const [gpa, setGpa] = useState('');
-  const [degree, setDegree] = useState<'석사' | '박사' | ''>('');
+export default function CommonForm({ onNext, initialData }: Props) {
+  const today = new Date().toISOString().slice(0, 7);
+
+  const [eduLevel, setEduLevel] = useState<EduLevel>(initialData?.eduLevel ?? 'college');
+  const [schoolName, setSchoolName] = useState(initialData?.schoolName ?? '');
+  const [major, setMajor] = useState(initialData?.major ?? '');
+  const [gpa, setGpa] = useState(initialData?.gpa != null ? String(initialData.gpa) : '');
+  const [degree, setDegree] = useState<'석사' | '박사' | ''>(initialData?.degree ?? '');
 
   // 어학
-  const [languages, setLanguages] = useState<LanguageEntry[]>([{ test: '', score: '', date: '' }]);
-  const [langIsCustom, setLangIsCustom] = useState<boolean[]>([false]);
+  const [languages, setLanguages] = useState<LanguageEntry[]>(
+    initialData?.languages?.length ? initialData.languages : [{ test: '', score: '', date: '' }]
+  );
+  const [langIsCustom, setLangIsCustom] = useState<boolean[]>(
+    initialData?.languages?.length ? initialData.languages.map(() => false) : [false]
+  );
   const [langTestOpenIdx, setLangTestOpenIdx] = useState<number | null>(null);
   const [opicSheetIdx, setOpicSheetIdx] = useState<number | null>(null);
   const [levelSheetIdx, setLevelSheetIdx] = useState<number | null>(null);
 
   // 지원 정보
-  const [targetCompany, setTargetCompany] = useState<CompanyType | null>(null);
-  const [situation, setSituation] = useState<SituationType | null>(null);
-  const [jobType, setJobType] = useState<JobType | null>(null);
-  const [etcJobDesc, setEtcJobDesc] = useState('');
+  const [targetCompany, setTargetCompany] = useState<CompanyType | null>(initialData?.targetCompany ?? null);
+  const [situation, setSituation] = useState<SituationType | null>(initialData?.situation ?? null);
+  const [jobType, setJobType] = useState<JobType | null>(initialData?.jobType ?? null);
+  const [etcJobDesc, setEtcJobDesc] = useState(initialData?.etcJobDesc ?? '');
 
   // UI
   const [situationOpen, setSituationOpen] = useState(false);
@@ -285,6 +292,7 @@ export default function CommonForm({ onNext }: Props) {
                     <span style={s.fieldLabel}>취득일 (선택)</span>
                     <input type="month" style={s.monthInput}
                       value={lang.date ? lang.date.replace('.', '-') : ''}
+                      max={today}
                       onChange={e => updateLang(idx, 'date', e.target.value.replace('-', '.'))} />
                   </div>
                 </div>
@@ -307,6 +315,7 @@ export default function CommonForm({ onNext }: Props) {
                     <span style={s.fieldLabel}>취득일 (선택)</span>
                     <input type="month" style={s.monthInput}
                       value={lang.date ? lang.date.replace('.', '-') : ''}
+                      max={today}
                       onChange={e => updateLang(idx, 'date', e.target.value.replace('-', '.'))} />
                   </div>
                 </div>
@@ -329,6 +338,7 @@ export default function CommonForm({ onNext }: Props) {
                     <span style={s.fieldLabel}>취득일 (선택)</span>
                     <input type="month" style={s.monthInput}
                       value={lang.date ? lang.date.replace('.', '-') : ''}
+                      max={today}
                       onChange={e => updateLang(idx, 'date', e.target.value.replace('-', '.'))} />
                   </div>
                 </div>

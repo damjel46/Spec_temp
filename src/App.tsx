@@ -75,6 +75,7 @@ export default function App() {
   if (screen === 'common') {
     return (
       <CommonForm
+        initialData={commonSpec ?? undefined}
         onNext={(spec) => { setCommonSpec(spec); setScreen('job'); }}
       />
     );

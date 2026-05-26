@@ -1,4 +1,10 @@
 export type OPICLevel = 'NL' | 'NM' | 'NH' | 'IL' | 'IM1' | 'IM2' | 'IM3' | 'IH' | 'AL';
+export type TechLevel = 'beginner' | 'intermediate' | 'advanced';
+
+export interface TechStackItem {
+  name: string;
+  level: TechLevel;
+}
 export type CompanyType = 'large' | 'mid' | 'startup' | 'public';
 export type EduLevel = 'college' | 'graduate' | 'highschool';
 export type SituationType = 'student' | 'jobseeker' | 'career';
@@ -41,7 +47,7 @@ export interface DevJobSpec {
   codingTest: CodingTestLevel;
   githubActive: boolean;
   internMonths: number;
-  techStack: string[];
+  techStack: TechStackItem[];
   projects: ProjectEntry[];
   notes: string;
   certificates: string[];

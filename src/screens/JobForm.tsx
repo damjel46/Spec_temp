@@ -10,7 +10,7 @@ import {
   ProgressStep,
 } from '@toss/tds-mobile';
 import { colors } from '@toss/tds-colors';
-import { CommonSpec, JobSpec, DevJobSpec, BizJobSpec, FinanceJobSpec, PublicInfo, EtcJobSpec, CareerLevel, ProjectEntry, CodingTestLevel, OfficeSkillLevel, MajorType, EtcSubCategory } from '../types/spec';
+import { CommonSpec, JobSpec, DevJobSpec, BizJobSpec, FinanceJobSpec, PublicInfo, EtcJobSpec, CareerLevel, ProjectEntry, CodingTestLevel, OfficeSkillLevel, MajorType, EtcSubCategory, TechStackItem, TechLevel } from '../types/spec';
 import { DEV_CERTIFICATES, BIZ_CERTIFICATES, FINANCE_CERTIFICATES, PUBLIC_CERTIFICATES, ETC_CERTIFICATES, BIZ_ROLES } from '../constants/jobTypes';
 
 const ChevronRight = () => (
@@ -203,13 +203,24 @@ const CODING_TEST_LEVELS: { label: string; value: CodingTestLevel }[] = [
   { label: '고급', value: 'advanced' },
 ];
 
+const TECH_LEVELS: { label: string; value: TechLevel }[] = [
+  { label: '입문', value: 'beginner' },
+  { label: '중급', value: 'intermediate' },
+  { label: '숙련', value: 'advanced' },
+];
+const TECH_LEVEL_LABEL: Record<TechLevel, string> = { beginner: '입문', intermediate: '중급', advanced: '숙련' };
+const TECH_LEVEL_BG: Record<TechLevel, string> = { beginner: '#f2f4f6', intermediate: '#dbeeff', advanced: '#bfdfff' };
+const TECH_LEVEL_COLOR: Record<TechLevel, string> = { beginner: '#4e5968', intermediate: '#3182f6', advanced: '#1b64da' };
+
 function DevForm({ onSubmit, isPublicCompany }: { onSubmit: (spec: DevJobSpec) => void; isPublicCompany?: boolean }) {
   const [careerLevel, setCareerLevel] = useState<CareerLevel | null>(null);
   const [codingTest, setCodingTest] = useState<CodingTestLevel | null>(null);
   const [githubActive, setGithubActive] = useState<boolean | null>(null);
   const [internMonths, setInternMonths] = useState('');
   const [techInput, setTechInput] = useState('');
-  const [techStack, setTechStack] = useState<string[]>([]);
+  const [techStack, setTechStack] = useState<TechStackItem[]>([]);
+  const [pendingTechItems, setPendingTechItems] = useState<string[]>([]);
+  const [techLevelSheetOpen, setTechLevelSheetOpen] = useState(false);
   const keyCounter = useRef(1);
   const [projectKeys, setProjectKeys] = useState<number[]>([0]);
   const [projects, setProjects] = useState<ProjectEntry[]>([{ name: '', github: '', desc: '' }]);
@@ -219,13 +230,28 @@ function DevForm({ onSubmit, isPublicCompany }: { onSubmit: (spec: DevJobSpec) =
   const [validationOpen, setValidationOpen] = useState(false);
 
   const addTech = () => {
-    const val = techInput.trim();
-    if (!val || techStack.includes(val)) return;
-    setTechStack(prev => [...prev, val]);
+    const items = techInput
+      .split(',')
+      .map(s => s.trim())
+      .filter(s => s && !techStack.find(t => t.name === s));
+    if (!items.length) return;
     setTechInput('');
+    setPendingTechItems(items);
+    setTechLevelSheetOpen(true);
   };
 
-  const removeTech = (t: string) => setTechStack(prev => prev.filter(s => s !== t));
+  const handleLevelSelect = (level: TechLevel) => {
+    const [current, ...rest] = pendingTechItems;
+    setTechStack(prev => [...prev, { name: current, level }]);
+    if (rest.length > 0) {
+      setPendingTechItems(rest);
+    } else {
+      setPendingTechItems([]);
+      setTechLevelSheetOpen(false);
+    }
+  };
+
+  const removeTech = (name: string) => setTechStack(prev => prev.filter(t => t.name !== name));
 
   const updateProject = (i: number, field: keyof ProjectEntry, val: string) =>
     setProjects(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: val } : p));
@@ -281,19 +307,21 @@ function DevForm({ onSubmit, isPublicCompany }: { onSubmit: (spec: DevJobSpec) =
     });
   };
 
+  const techLevelSheetTitle = `${pendingTechItems[0] ?? ''} 레벨 선택`;
+
   return (
     <>
       <ListHeader title="경력" />
       <ListRow
         onClick={() => setCareerSheetOpen(true)}
         left={
-          <span style={careerLevel ? s.selectedValue : s.rowLabel}>
+          <span style={careerLevel ? s.selectedValue : s.placeholderValue}>
             {careerLevel ? CAREER_LEVELS.find(c => c.value === careerLevel)?.label : '경력 선택'}
           </span>
         }
         right={
           <div style={s.rowRight}>
-            <span style={s.placeholderValue}>선택</span>
+            {!careerLevel && <span style={s.placeholderValue}>선택</span>}
             <ChevronRight />
           </div>
         }
@@ -331,7 +359,7 @@ function DevForm({ onSubmit, isPublicCompany }: { onSubmit: (spec: DevJobSpec) =
           <div style={{ flex: 1 }}>
             <TextField variant="line" value={techInput}
               onChange={e => setTechInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addTech()}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTech(); } }}
               placeholder="예) React, Java, AWS, Docker" />
           </div>
           <button style={s.techAddBtn} onClick={addTech}>추가</button>
@@ -340,9 +368,11 @@ function DevForm({ onSubmit, isPublicCompany }: { onSubmit: (spec: DevJobSpec) =
       {techStack.length > 0 && (
         <div style={s.tagRow}>
           {techStack.map(t => (
-            <div key={t} style={s.tag}>
-              <span style={s.tagText}>{t}</span>
-              <span style={s.tagRemove} onClick={() => removeTech(t)}>×</span>
+            <div key={t.name} style={{ ...s.tag, background: TECH_LEVEL_BG[t.level] }}>
+              <span style={{ ...s.tagText, color: TECH_LEVEL_COLOR[t.level] }}>
+                {t.name} · {TECH_LEVEL_LABEL[t.level]}
+              </span>
+              <span style={{ ...s.tagRemove, color: TECH_LEVEL_COLOR[t.level] }} onClick={() => removeTech(t.name)}>×</span>
             </div>
           ))}
         </div>
@@ -424,6 +454,21 @@ function DevForm({ onSubmit, isPublicCompany }: { onSubmit: (spec: DevJobSpec) =
             onClick={() => { setCareerLevel(c.value); setCareerSheetOpen(false); }}
             left={<span style={s.rowLabel}>{c.label}</span>}
             right={careerLevel === c.value ? <span style={s.checkmark}>✓</span> : null} />
+        ))}
+      </BottomSheet>
+
+      <BottomSheet open={techLevelSheetOpen} onDimmerClick={() => { setTechLevelSheetOpen(false); setPendingTechItems([]); }}>
+        <BottomSheet.Header>{techLevelSheetTitle}</BottomSheet.Header>
+        {pendingTechItems.length > 1 && (
+          <div style={{ padding: '4px 24px 8px', fontSize: 13, color: '#6b7684' }}>
+            {pendingTechItems.length}개 항목 중 순서대로 선택해주세요
+          </div>
+        )}
+        {TECH_LEVELS.map(lv => (
+          <ListRow key={lv.value}
+            onClick={() => handleLevelSelect(lv.value)}
+            left={<span style={{ ...s.rowLabel, color: TECH_LEVEL_COLOR[lv.value] }}>{lv.label}</span>}
+          />
         ))}
       </BottomSheet>
 
