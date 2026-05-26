@@ -68,6 +68,30 @@ export default function Result({ result, onRestart, onShare }: Props) {
     }
   };
 
+  const handleSaveImage = () => {
+    if (!shareImageUrl) return;
+    const a = document.createElement('a');
+    a.href = shareImageUrl;
+    a.download = '스펙온도_결과.png';
+    a.click();
+  };
+
+  const handleShareFromModal = async () => {
+    if (!shareImageUrl) return;
+    try {
+      const res = await fetch(shareImageUrl);
+      const blob = await res.blob();
+      const file = new File([blob], '스펙온도_결과.png', { type: 'image/png' });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: '내 스펙 온도 분석 결과' });
+        return;
+      }
+    } catch { /* ignore */ }
+    // 파일 공유 미지원 시 텍스트 공유
+    const text = `📊 스펙 온도 분석 결과\n${getScoreTier(result.score)}\n합격 가능성: ${result.score}%\n\n토스 앱에서 스펙 온도 검색하고 내 합격률 확인해봐!`;
+    try { await navigator.share({ title: '스펙 온도 분석 결과', text }); } catch { /* 취소 */ }
+  };
+
   return (
     <div style={s.container}>
       {/* 캡처 전용 카드 — 화면 밖에 렌더 */}
@@ -190,7 +214,7 @@ export default function Result({ result, onRestart, onShare }: Props) {
             <button style={s.outlineBtn} onClick={handleRestart}>다시 분석하기</button>
           </div>
           <button style={{ ...s.primaryBtn, opacity: isCapturing ? 0.7 : 1 }} onClick={handleShareImage} disabled={isCapturing}>
-            {isCapturing ? '이미지 생성 중...' : '결과 이미지 보기'}
+            {isCapturing ? '이미지 생성 중...' : '결과 공유하기'}
           </button>
         </div>
         <p style={s.disclaimer}>
@@ -198,13 +222,15 @@ export default function Result({ result, onRestart, onShare }: Props) {
         </p>
       </div>
 
-      {/* 이미지 저장 모달 */}
+      {/* 이미지 공유 모달 */}
       {shareImageUrl && (
         <div style={s.imageModal} onClick={() => setShareImageUrl(null)}>
           <div style={s.imageModalInner} onClick={e => e.stopPropagation()}>
-            <p style={s.imageModalGuide}>이미지를 <strong>길게 눌러</strong> 저장하세요</p>
             <img src={shareImageUrl} alt="결과 이미지" style={s.shareImg} />
-            <button style={s.imageModalClose} onClick={() => setShareImageUrl(null)}>닫기</button>
+            <div style={s.imageModalButtons}>
+              <button style={s.imageModalSaveBtn} onClick={handleSaveImage}>저장하기</button>
+              <button style={s.imageModalShareBtn} onClick={handleShareFromModal}>공유하기</button>
+            </div>
           </div>
         </div>
       )}
@@ -423,26 +449,35 @@ const s: Record<string, React.CSSProperties> = {
     width: '100%',
     maxWidth: 375,
   },
-  imageModalGuide: {
-    margin: 0,
-    fontSize: 15,
-    color: '#fff',
-    textAlign: 'center' as const,
-    lineHeight: 1.5,
-  },
   shareImg: {
     width: '100%',
     borderRadius: 16,
     display: 'block',
   },
-  imageModalClose: {
-    height: 44,
-    padding: '0 32px',
-    borderRadius: 22,
-    background: 'rgba(255,255,255,0.2)',
-    border: '1px solid rgba(255,255,255,0.4)',
+  imageModalButtons: {
+    display: 'flex',
+    gap: 10,
+    width: '100%',
+  },
+  imageModalSaveBtn: {
+    flex: 1,
+    height: 52,
+    borderRadius: 10,
+    background: 'rgba(255,255,255,0.18)',
+    border: '1.5px solid rgba(255,255,255,0.45)',
     color: '#fff',
-    fontSize: 15,
+    fontSize: 16,
+    fontWeight: 600,
+    cursor: 'pointer',
+  },
+  imageModalShareBtn: {
+    flex: 1,
+    height: 52,
+    borderRadius: 10,
+    background: '#3182f6',
+    border: 'none',
+    color: '#fff',
+    fontSize: 16,
     fontWeight: 600,
     cursor: 'pointer',
   },
