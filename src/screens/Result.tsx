@@ -178,26 +178,25 @@ export default function Result({ result, onRestart, onShare }: Props) {
           </>
         )}
 
-        <div style={{ height: 100 }} />
       </div>
 
-      {/* 하단 더블 버튼 */}
-      <div style={s.bottomActions}>
-        <div style={s.restartWrap}>
-          {adStatus === 'loaded' && (
-            <p style={s.adLabel}>광고</p>
-          )}
-          <button style={s.outlineBtn} onClick={handleRestart}>다시 분석하기</button>
+      {/* 하단 고정 바 — 흰 배경으로 콘텐츠 가림 방지 */}
+      <div style={s.bottomBar}>
+        <div style={s.bottomActions}>
+          <div style={s.restartWrap}>
+            {adStatus === 'loaded' && (
+              <p style={s.adLabel}>광고</p>
+            )}
+            <button style={s.outlineBtn} onClick={handleRestart}>다시 분석하기</button>
+          </div>
+          <button style={{ ...s.primaryBtn, opacity: isCapturing ? 0.7 : 1 }} onClick={handleShareImage} disabled={isCapturing}>
+            {isCapturing ? '이미지 생성 중...' : '결과 이미지 보기'}
+          </button>
         </div>
-        <button style={{ ...s.primaryBtn, opacity: isCapturing ? 0.7 : 1 }} onClick={handleShareImage} disabled={isCapturing}>
-          {isCapturing ? '이미지 생성 중...' : '결과 이미지 보기'}
-        </button>
+        <p style={s.disclaimer}>
+          AI 분석 결과는 참고용이며 실제 채용 기준과 다를 수 있어요.
+        </p>
       </div>
-
-      {/* AI 면책 문구 */}
-      <p style={s.disclaimer}>
-        AI 분석 결과는 참고용이며 실제 채용 기준과 다를 수 있어요.
-      </p>
 
       {/* 이미지 저장 모달 */}
       {shareImageUrl && (
@@ -235,7 +234,7 @@ const s: Record<string, React.CSSProperties> = {
     minHeight: '100vh',
   },
   scrollContent: {
-    paddingBottom: 140,
+    paddingBottom: 160,
   },
   gaugeSection: {
     display: 'flex',
@@ -279,15 +278,22 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 500,
     cursor: 'pointer',
   },
-  bottomActions: {
+  bottomBar: {
     position: 'fixed',
-    bottom: 24,
+    bottom: 0,
     left: '50%',
     transform: 'translateX(-50%)',
-    width: 'calc(100% - 48px)',
-    maxWidth: 327,
+    width: '100%',
+    maxWidth: 375,
+    background: '#fff',
+    borderTop: `1px solid ${colors.grey100}`,
+    padding: '12px 24px 20px',
+    boxSizing: 'border-box' as const,
+  },
+  bottomActions: {
     display: 'flex',
     gap: 8,
+    marginBottom: 8,
   },
   restartWrap: {
     flex: 1,
@@ -393,14 +399,11 @@ const s: Record<string, React.CSSProperties> = {
     lineHeight: 1.5,
   },
   disclaimer: {
-    position: 'fixed',
-    bottom: 4,
-    left: 0,
-    right: 0,
     textAlign: 'center',
     fontSize: 11,
     color: colors.grey600,
     margin: 0,
+    lineHeight: 1.4,
   },
   imageModal: {
     position: 'fixed',
