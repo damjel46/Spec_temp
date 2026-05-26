@@ -21,6 +21,7 @@ export default function Result({ result, onRestart, onShare }: Props) {
   const { adStatus, showAd } = useAd();
   const [schedules, setSchedules] = useState<(CertExamSchedule | null)[]>([]);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -57,21 +58,10 @@ export default function Result({ result, onRestart, onShare }: Props) {
     try {
       const { default: html2canvas } = await import('html2canvas');
       const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true, logging: false });
-      const blob = await new Promise<Blob>((res) => canvas.toBlob((b) => res(b!), 'image/png'));
-      const file = new File([blob], '스펙온도_결과.png', { type: 'image/png' });
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: '내 스펙 온도 분석 결과' });
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = '스펙온도_결과.png';
-        a.click();
-        URL.revokeObjectURL(url);
-        onShare();
-      }
+      const dataUrl = canvas.toDataURL('image/png');
+      setShareImageUrl(dataUrl);
     } catch {
-      // 사용자가 공유 취소한 경우 등 — 무시
+      // 캡처 실패 시 무시
     } finally {
       setIsCapturing(false);
     }
@@ -199,7 +189,7 @@ export default function Result({ result, onRestart, onShare }: Props) {
           <button style={s.outlineBtn} onClick={handleRestart}>다시 분석하기</button>
         </div>
         <button style={{ ...s.primaryBtn, opacity: isCapturing ? 0.7 : 1 }} onClick={handleShareImage} disabled={isCapturing}>
-          {isCapturing ? '이미지 생성 중...' : '결과 이미지 저장'}
+          {isCapturing ? '이미지 생성 중...' : '결과 이미지 보기'}
         </button>
       </div>
 
@@ -207,6 +197,17 @@ export default function Result({ result, onRestart, onShare }: Props) {
       <p style={s.disclaimer}>
         AI 분석 결과는 참고용이며 실제 채용 기준과 다를 수 있어요.
       </p>
+
+      {/* 이미지 저장 모달 */}
+      {shareImageUrl && (
+        <div style={s.imageModal} onClick={() => setShareImageUrl(null)}>
+          <div style={s.imageModalInner} onClick={e => e.stopPropagation()}>
+            <p style={s.imageModalGuide}>이미지를 <strong>길게 눌러</strong> 저장하세요</p>
+            <img src={shareImageUrl} alt="결과 이미지" style={s.shareImg} />
+            <button style={s.imageModalClose} onClick={() => setShareImageUrl(null)}>닫기</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -399,5 +400,46 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 11,
     color: colors.grey600,
     margin: 0,
+  },
+  imageModal: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.75)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 999,
+    padding: '24px 16px',
+  },
+  imageModalInner: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: 16,
+    width: '100%',
+    maxWidth: 375,
+  },
+  imageModalGuide: {
+    margin: 0,
+    fontSize: 15,
+    color: '#fff',
+    textAlign: 'center' as const,
+    lineHeight: 1.5,
+  },
+  shareImg: {
+    width: '100%',
+    borderRadius: 16,
+    display: 'block',
+  },
+  imageModalClose: {
+    height: 44,
+    padding: '0 32px',
+    borderRadius: 22,
+    background: 'rgba(255,255,255,0.2)',
+    border: '1px solid rgba(255,255,255,0.4)',
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 600,
+    cursor: 'pointer',
   },
 };
