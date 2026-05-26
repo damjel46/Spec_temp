@@ -9,6 +9,7 @@ import { CommonSpec, JobSpec, AnalysisResult } from './types/spec';
 
 type Screen = 'intro' | 'common' | 'job' | 'loading' | 'result';
 
+
 const STORAGE_KEY = 'spec_last_result';
 const SPEC_KEY = 'spec_input';
 
