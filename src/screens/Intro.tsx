@@ -11,7 +11,7 @@ const FEATURES = [
   {
     emoji: '🔍',
     title: 'AI가 합격률을 분석',
-    desc: '직업 직무·공스펙을 종합 분석',
+    desc: '직군·스펙을 종합 AI 분석',
   },
   {
     emoji: '📊',
@@ -20,8 +20,8 @@ const FEATURES = [
   },
   {
     emoji: '🗺️',
-    title: '맞춤형 인증 로드맵 제공',
-    desc: '합격에 필요한 인증을 단계별로 추천',
+    title: '맞춤형 자격증 로드맵 제공',
+    desc: '합격에 필요한 자격증을 단계별로 추천',
   },
 ];
 
@@ -36,7 +36,7 @@ export default function Intro({ onStart, onShowPrevious }: Props) {
         </div>
         <h1 style={s.headline}>내 스펙의 온도는{'\n'}몇 도일까요?</h1>
         <p style={s.subtext}>
-          직관한 직무에 합격할 확률을 분석하고,{'\n'}인증 로드맵을 추천해드려요.
+          지원할 직무에 합격할 확률을 분석하고,{'\n'}자격증 로드맵을 추천해드려요.
         </p>
       </div>
 
