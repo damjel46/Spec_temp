@@ -29,6 +29,7 @@ interface Props {
   commonSpec: CommonSpec;
   onNext: (commonSpec: CommonSpec, jobSpec: JobSpec) => void;
   onBack: () => void;
+  initialData?: JobSpec;
 }
 
 const JOB_TYPE_LABELS: Record<string, { label: string; emoji: string }> = {
@@ -212,20 +213,21 @@ const TECH_LEVEL_LABEL: Record<TechLevel, string> = { beginner: '입문', interm
 const TECH_LEVEL_BG: Record<TechLevel, string> = { beginner: '#f2f4f6', intermediate: '#dbeeff', advanced: '#bfdfff' };
 const TECH_LEVEL_COLOR: Record<TechLevel, string> = { beginner: '#4e5968', intermediate: '#3182f6', advanced: '#1b64da' };
 
-function DevForm({ onSubmit, isPublicCompany }: { onSubmit: (spec: DevJobSpec) => void; isPublicCompany?: boolean }) {
-  const [careerLevel, setCareerLevel] = useState<CareerLevel | null>(null);
-  const [codingTest, setCodingTest] = useState<CodingTestLevel | null>(null);
-  const [githubActive, setGithubActive] = useState<boolean | null>(null);
-  const [internMonths, setInternMonths] = useState('');
+function DevForm({ onSubmit, isPublicCompany, initialData }: { onSubmit: (spec: DevJobSpec) => void; isPublicCompany?: boolean; initialData?: DevJobSpec }) {
+  const initProjects = initialData?.projects?.length ? initialData.projects : [{ name: '', github: '', desc: '' }];
+  const [careerLevel, setCareerLevel] = useState<CareerLevel | null>(initialData?.careerLevel ?? null);
+  const [codingTest, setCodingTest] = useState<CodingTestLevel | null>(initialData?.codingTest ?? null);
+  const [githubActive, setGithubActive] = useState<boolean | null>(initialData?.githubActive ?? null);
+  const [internMonths, setInternMonths] = useState(initialData?.internMonths ? String(initialData.internMonths) : '');
   const [techInput, setTechInput] = useState('');
-  const [techStack, setTechStack] = useState<TechStackItem[]>([]);
+  const [techStack, setTechStack] = useState<TechStackItem[]>(initialData?.techStack ?? []);
   const [pendingTechItems, setPendingTechItems] = useState<string[]>([]);
   const [techLevelSheetOpen, setTechLevelSheetOpen] = useState(false);
-  const keyCounter = useRef(1);
-  const [projectKeys, setProjectKeys] = useState<number[]>([0]);
-  const [projects, setProjects] = useState<ProjectEntry[]>([{ name: '', github: '', desc: '' }]);
-  const [notes, setNotes] = useState('');
-  const [certificates, setCertificates] = useState<string[]>([]);
+  const keyCounter = useRef(initProjects.length);
+  const [projectKeys, setProjectKeys] = useState<number[]>(() => initProjects.map((_, i) => i));
+  const [projects, setProjects] = useState<ProjectEntry[]>(initProjects);
+  const [notes, setNotes] = useState(initialData?.notes ?? '');
+  const [certificates, setCertificates] = useState<string[]>(initialData?.certificates ?? []);
   const [careerSheetOpen, setCareerSheetOpen] = useState(false);
   const [validationOpen, setValidationOpen] = useState(false);
 
@@ -496,13 +498,13 @@ const OFFICE_SKILL_LEVELS: { label: string; value: OfficeSkillLevel }[] = [
 ];
 
 /* ──────────── Biz Form ──────────── */
-function BizForm({ onSubmit, isPublicCompany }: { onSubmit: (spec: BizJobSpec) => void; isPublicCompany?: boolean }) {
-  const [bizRole, setBizRole] = useState('');
+function BizForm({ onSubmit, isPublicCompany, initialData }: { onSubmit: (spec: BizJobSpec) => void; isPublicCompany?: boolean; initialData?: BizJobSpec }) {
+  const [bizRole, setBizRole] = useState(initialData?.bizRole ?? '');
   const [bizRoleSheetOpen, setBizRoleSheetOpen] = useState(false);
-  const [officeSkill, setOfficeSkill] = useState<OfficeSkillLevel | null>(null);
-  const [internMonths, setInternMonths] = useState('');
-  const [contestAwards, setContestAwards] = useState('');
-  const [certificates, setCertificates] = useState<string[]>([]);
+  const [officeSkill, setOfficeSkill] = useState<OfficeSkillLevel | null>(initialData?.officeSkill ?? null);
+  const [internMonths, setInternMonths] = useState(initialData?.internMonths ? String(initialData.internMonths) : '');
+  const [contestAwards, setContestAwards] = useState(initialData?.contestAwards ? String(initialData.contestAwards) : '');
+  const [certificates, setCertificates] = useState<string[]>(initialData?.certificates ?? []);
   const [validationOpen, setValidationOpen] = useState(false);
 
   const toggleCert = (cert: string) =>
@@ -598,11 +600,11 @@ function BizForm({ onSubmit, isPublicCompany }: { onSubmit: (spec: BizJobSpec) =
 }
 
 /* ──────────── Finance Form ──────────── */
-function FinanceForm({ onSubmit, isPublicCompany }: { onSubmit: (spec: FinanceJobSpec) => void; isPublicCompany?: boolean }) {
-  const [certificates, setCertificates] = useState<string[]>([]);
-  const [hasFinanceIntern, setHasFinanceIntern] = useState<boolean | null>(null);
-  const [financeContest, setFinanceContest] = useState<boolean | null>(null);
-  const [financeClub, setFinanceClub] = useState<boolean | null>(null);
+function FinanceForm({ onSubmit, isPublicCompany, initialData }: { onSubmit: (spec: FinanceJobSpec) => void; isPublicCompany?: boolean; initialData?: FinanceJobSpec }) {
+  const [certificates, setCertificates] = useState<string[]>(initialData?.certificates ?? []);
+  const [hasFinanceIntern, setHasFinanceIntern] = useState<boolean | null>(initialData?.hasFinanceIntern ?? null);
+  const [financeContest, setFinanceContest] = useState<boolean | null>(initialData?.financeContest ?? null);
+  const [financeClub, setFinanceClub] = useState<boolean | null>(initialData?.financeClub ?? null);
   const [validationOpen, setValidationOpen] = useState(false);
 
   const toggleCert = (cert: string) =>
@@ -680,14 +682,14 @@ const MAJOR_TYPES: { label: string; value: MajorType }[] = [
 ];
 
 /* ──────────── Public Form ──────────── */
-function PublicForm({ onSubmit }: { onSubmit: (spec: PublicInfo) => void }) {
-  const [ncsLevel, setNcsLevel] = useState<'none' | 'basic' | 'intermediate' | 'advanced' | null>(null);
-  const [koreanHistoryLevel, setKoreanHistoryLevel] = useState('');
-  const [targetPublicType, setTargetPublicType] = useState('');
-  const [majorType, setMajorType] = useState<MajorType | null>(null);
-  const [volunteerHours, setVolunteerHours] = useState('');
-  const [publicIntern, setPublicIntern] = useState<boolean | null>(null);
-  const [certificates, setCertificates] = useState<string[]>([]);
+function PublicForm({ onSubmit, initialData }: { onSubmit: (spec: PublicInfo) => void; initialData?: PublicInfo }) {
+  const [ncsLevel, setNcsLevel] = useState<'none' | 'basic' | 'intermediate' | 'advanced' | null>(initialData?.ncsLevel ?? null);
+  const [koreanHistoryLevel, setKoreanHistoryLevel] = useState(initialData?.koreanHistoryLevel ? String(initialData.koreanHistoryLevel) : '');
+  const [targetPublicType, setTargetPublicType] = useState(initialData?.targetPublicType ?? '');
+  const [majorType, setMajorType] = useState<MajorType | null>(initialData?.majorType ?? null);
+  const [volunteerHours, setVolunteerHours] = useState(initialData?.volunteerHours ? String(initialData.volunteerHours) : '');
+  const [publicIntern, setPublicIntern] = useState<boolean | null>(initialData?.publicIntern ?? null);
+  const [certificates, setCertificates] = useState<string[]>(initialData?.certificates ?? []);
   const [validationOpen, setValidationOpen] = useState(false);
 
   const toggleCert = (cert: string) =>
@@ -802,23 +804,23 @@ const ETC_SUB_CATEGORIES: { label: string; value: EtcSubCategory }[] = [
 ];
 
 /* ──────────── Etc Form ──────────── */
-function EtcForm({ commonSpec, onSubmit, isPublicCompany }: { commonSpec: CommonSpec; onSubmit: (spec: EtcJobSpec) => void; isPublicCompany?: boolean }) {
-  const [etcSubCategory, setEtcSubCategory] = useState<EtcSubCategory | null>(null);
-  const [certificates, setCertificates] = useState<string[]>([]);
-  const [experience, setExperience] = useState('');
+function EtcForm({ commonSpec, onSubmit, isPublicCompany, initialData }: { commonSpec: CommonSpec; onSubmit: (spec: EtcJobSpec) => void; isPublicCompany?: boolean; initialData?: EtcJobSpec }) {
+  const [etcSubCategory, setEtcSubCategory] = useState<EtcSubCategory | null>(initialData?.etcSubCategory ?? null);
+  const [certificates, setCertificates] = useState<string[]>(initialData?.certificates ?? []);
+  const [experience, setExperience] = useState(initialData?.experience ?? '');
   const [validationOpen, setValidationOpen] = useState(false);
 
   // 서비스업
-  const [speakingGrade, setSpeakingGrade] = useState('');
-  const [serviceMonths, setServiceMonths] = useState('');
+  const [speakingGrade, setSpeakingGrade] = useState(initialData?.speakingGrade ?? '');
+  const [serviceMonths, setServiceMonths] = useState(initialData?.serviceMonths ? String(initialData.serviceMonths) : '');
   // 의료·보건
-  const [hasNationalLicense, setHasNationalLicense] = useState<boolean | null>(null);
-  const [hospitalMonths, setHospitalMonths] = useState('');
+  const [hasNationalLicense, setHasNationalLicense] = useState<boolean | null>(initialData?.hasNationalLicense ?? null);
+  const [hospitalMonths, setHospitalMonths] = useState(initialData?.hospitalMonths ? String(initialData.hospitalMonths) : '');
   // 유통·물류
-  const [logisticsMonths, setLogisticsMonths] = useState('');
+  const [logisticsMonths, setLogisticsMonths] = useState(initialData?.logisticsMonths ? String(initialData.logisticsMonths) : '');
   // 교육
-  const [hasTeacherLicense, setHasTeacherLicense] = useState<boolean | null>(null);
-  const [teachingMonths, setTeachingMonths] = useState('');
+  const [hasTeacherLicense, setHasTeacherLicense] = useState<boolean | null>(initialData?.hasTeacherLicense ?? null);
+  const [teachingMonths, setTeachingMonths] = useState(initialData?.teachingMonths ? String(initialData.teachingMonths) : '');
 
   const toggleCert = (cert: string) =>
     setCertificates(prev => prev.includes(cert) ? prev.filter(c => c !== cert) : [...prev, cert]);
@@ -968,9 +970,10 @@ function EtcForm({ commonSpec, onSubmit, isPublicCompany }: { commonSpec: Common
 }
 
 /* ──────────── Main JobForm ──────────── */
-export default function JobForm({ commonSpec, onNext, onBack }: Props) {
+export default function JobForm({ commonSpec, onNext, onBack, initialData }: Props) {
   const [pendingJobSpec, setPendingJobSpec] = useState<JobSpec | null>(null);
   const [showPublicStep, setShowPublicStep] = useState(false);
+  const publicInitialData = (initialData as DevJobSpec | BizJobSpec | FinanceJobSpec | EtcJobSpec)?.publicInfo;
 
   const jobInfo = JOB_TYPE_LABELS[commonSpec.jobType] ?? { label: '기타', emoji: '✨' };
   const isPublicCompany = commonSpec.targetCompany === 'public';
@@ -1022,10 +1025,10 @@ export default function JobForm({ commonSpec, onNext, onBack }: Props) {
             />
             <Border />
 
-            {commonSpec.jobType === 'dev' && <DevForm onSubmit={handleJobSubmit} isPublicCompany={isPublicCompany} />}
-            {commonSpec.jobType === 'biz' && <BizForm onSubmit={handleJobSubmit} isPublicCompany={isPublicCompany} />}
-            {commonSpec.jobType === 'finance' && <FinanceForm onSubmit={handleJobSubmit} isPublicCompany={isPublicCompany} />}
-            {commonSpec.jobType === 'etc' && <EtcForm commonSpec={commonSpec} onSubmit={handleJobSubmit} isPublicCompany={isPublicCompany} />}
+            {commonSpec.jobType === 'dev' && <DevForm onSubmit={handleJobSubmit} isPublicCompany={isPublicCompany} initialData={initialData as DevJobSpec | undefined} />}
+            {commonSpec.jobType === 'biz' && <BizForm onSubmit={handleJobSubmit} isPublicCompany={isPublicCompany} initialData={initialData as BizJobSpec | undefined} />}
+            {commonSpec.jobType === 'finance' && <FinanceForm onSubmit={handleJobSubmit} isPublicCompany={isPublicCompany} initialData={initialData as FinanceJobSpec | undefined} />}
+            {commonSpec.jobType === 'etc' && <EtcForm commonSpec={commonSpec} onSubmit={handleJobSubmit} isPublicCompany={isPublicCompany} initialData={initialData as EtcJobSpec | undefined} />}
           </>
         ) : (
           <>
@@ -1042,7 +1045,7 @@ export default function JobForm({ commonSpec, onNext, onBack }: Props) {
             </ProgressStepper>
 
             <Border />
-            <PublicForm onSubmit={handlePublicSubmit} />
+            <PublicForm onSubmit={handlePublicSubmit} initialData={publicInitialData} />
           </>
         )}
       </div>

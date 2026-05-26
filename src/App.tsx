@@ -96,6 +96,7 @@ export default function App() {
     return (
       <JobForm
         commonSpec={commonSpec!}
+        initialData={jobSpec ?? undefined}
         onNext={(cs, js) => { setCommonSpec(cs); setJobSpec(js); saveSpec(cs, js); setScreen('loading'); }}
         onBack={() => setScreen('common')}
       />
