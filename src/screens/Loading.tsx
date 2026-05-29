@@ -3,11 +3,12 @@ import { Top } from '@toss/tds-mobile';
 import { colors } from '@toss/tds-colors';
 import { CommonSpec, JobSpec, AnalysisResult } from '../types/spec';
 import { analyzeSpec } from '../api/openai';
-import { useAd } from '../hooks/useAd';
 
 interface Props {
   commonSpec: CommonSpec;
   jobSpec: JobSpec;
+  /** App에서 광고와 병렬로 이미 시작된 분석 Promise. 없으면 여기서 새로 요청. */
+  analysisPromise?: Promise<AnalysisResult>;
   onDone: (result: AnalysisResult) => void;
   onError: () => void;
 }
@@ -16,19 +17,17 @@ const SkeletonBar = ({ width = '100%', height = 16 }: { width?: string | number;
   <div style={{ width, height, background: colors.grey100, borderRadius: 4 }} />
 );
 
-export default function Loading({ commonSpec, jobSpec, onDone, onError }: Props) {
-  const { loadAd } = useAd();
-
+export default function Loading({ commonSpec, jobSpec, analysisPromise, onDone, onError }: Props) {
   useEffect(() => {
-    // 90초 초과 시 에러 처리 (심사 기준: 시작 5초 + 분석 여유시간)
+    // 90초 초과 시 에러 처리
     const timeout = setTimeout(() => {
       onError();
     }, 90_000);
 
-    analyzeSpec(commonSpec, jobSpec)
+    // 이미 실행 중인 Promise가 있으면 그걸 기다리고, 없으면 새로 요청
+    const promise = analysisPromise ?? analyzeSpec(commonSpec, jobSpec);
+    promise
       .then((result) => {
-        // GPT 분석 완료 시점에 광고 미리 로드 (결과 화면에서 바로 사용 가능)
-        loadAd();
         onDone(result);
       })
       .catch(onError)

@@ -14,7 +14,8 @@ import { GoogleAdMob } from '@apps-in-toss/web-framework';
  *  - 광고 표기 "광고" 레이블 시각적으로 표시 필요 (Result.tsx 참고)
  */
 
-const AD_GROUP_ID = import.meta.env.VITE_AD_GROUP_ID ?? '';
+// 실제 광고 ID — 환경변수 우선, 없으면 실제 ID로 fallback
+const AD_GROUP_ID = import.meta.env.VITE_AD_GROUP_ID ?? 'ait.v2.live.a913dc9aadf4458e';
 
 type AdStatus = 'idle' | 'loading' | 'loaded' | 'failed';
 

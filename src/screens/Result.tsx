@@ -1,15 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Top, ListHeader, Border } from '@toss/tds-mobile';
+import React, { useState, useRef } from 'react';
+import { Top, ListHeader, Border, BottomSheet } from '@toss/tds-mobile';
 import { colors } from '@toss/tds-colors';
-import { AnalysisResult, ActionPlanItem, CertExamSchedule } from '../types/spec';
-import { CERT_CODE_MAP } from '../constants/certCodeMap';
-import { fetchNextExamSchedule } from '../api/examSchedule';
+import { AnalysisResult, ActionPlanItem } from '../types/spec';
 import CircularGauge from '../components/CircularGauge';
 import SpecBarChart from '../components/SpecBarChart';
 import RoadmapTimeline from '../components/RoadmapTimeline';
 import ShareCard from '../components/ShareCard';
-import { useAd } from '../hooks/useAd';
-import { getQnetSearchUrl } from '../api/qnet';
+import { share, getTossShareLink, getSchemeUri, saveBase64Data } from '@apps-in-toss/web-framework';
 import { getScoreTier } from '../utils/scoreTier';
 
 interface Props {
@@ -19,38 +16,12 @@ interface Props {
 }
 
 export default function Result({ result, onRestart, onShare }: Props) {
-  const { adStatus, showAd } = useAd();
-  const [schedules, setSchedules] = useState<(CertExamSchedule | null)[]>([]);
   const [isCapturing, setIsCapturing] = useState(false);
   const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      const results = await Promise.all(
-        result.roadmap.map(async (item) => {
-          const entry = CERT_CODE_MAP[item.name];
-          if (!entry) return null;
-          try {
-            return await fetchNextExamSchedule(entry.jmCd, entry.qualgbCd);
-          } catch {
-            return null;
-          }
-        }),
-      );
-      if (!cancelled) setSchedules(results);
-    }
-    load();
-    return () => { cancelled = true; };
-  }, []);
-
   const handleRestart = () => {
-    if (adStatus === 'loaded') {
-      showAd(onRestart);
-    } else {
-      onRestart();
-    }
+    onRestart();
   };
 
   const handleShareImage = async () => {
@@ -58,37 +29,67 @@ export default function Result({ result, onRestart, onShare }: Props) {
     setIsCapturing(true);
     try {
       const { default: html2canvas } = await import('html2canvas');
-      const canvas = await html2canvas(cardRef.current, { scale: 2, useCORS: true, logging: false });
+      const canvas = await html2canvas(cardRef.current, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        backgroundColor: '#ffffff',
+      });
       const dataUrl = canvas.toDataURL('image/png');
       setShareImageUrl(dataUrl);
     } catch {
-      // 캡처 실패 시 무시
+      // 캡처 실패 시 사용자에게 알림
+      alert('이미지 생성에 실패했어요. 다시 시도해주세요.');
     } finally {
       setIsCapturing(false);
     }
   };
 
-  const handleSaveImage = () => {
+  const handleSaveImage = async () => {
     if (!shareImageUrl) return;
-    const a = document.createElement('a');
-    a.href = shareImageUrl;
-    a.download = '스펙온도_결과.png';
-    a.click();
+
+    // 1) 토스 네이티브 저장 API — isSupported 프로퍼티 없음, 직접 호출 후 catch
+    try {
+      const base64 = shareImageUrl.replace(/^data:image\/png;base64,/, '');
+      await saveBase64Data({ data: base64, fileName: '스펙온도_결과.png', mimeType: 'image/png' });
+      return;
+    } catch { /* WebView 미지원 환경 → 다음 fallback */ }
+
+    // 2) Web Share API with File (iOS/Android WebView 공유 시트 — 사진 저장 가능)
+    try {
+      const blob = await (await fetch(shareImageUrl)).blob();
+      const file = new File([blob], '스펙온도_결과.png', { type: 'image/png' });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: '스펙 온도 분석 결과' });
+        return;
+      }
+    } catch { /* 다음 fallback으로 */ }
+
+    // 3) 브라우저 다운로드 (데스크톱 미리보기 fallback)
+    try {
+      const a = document.createElement('a');
+      a.href = shareImageUrl;
+      a.download = '스펙온도_결과.png';
+      a.click();
+    } catch { /* ignore */ }
   };
 
   const handleShareFromModal = async () => {
     if (!shareImageUrl) return;
+
+    // 1) 토스 네이티브 공유 API — isSupported 프로퍼티 없음, 직접 호출 후 catch
     try {
-      const res = await fetch(shareImageUrl);
-      const blob = await res.blob();
-      const file = new File([blob], '스펙온도_결과.png', { type: 'image/png' });
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: '내 스펙 온도 분석 결과' });
-        return;
-      }
-    } catch { /* ignore */ }
-    // 파일 공유 미지원 시 텍스트 공유
-    const text = `📊 스펙 온도 분석 결과\n${getScoreTier(result.score)}\n합격 가능성: ${result.score}%\n\n토스 앱에서 스펙 온도 검색하고 내 합격률 확인해봐!`;
+      const schemeUri = getSchemeUri();
+      const tossLink = await getTossShareLink(schemeUri);
+      const tier = getScoreTier(result.score);
+      const message = `📊 내 스펙 온도 분석 결과\n${tier}\n\n"스펙 온도"로 취업 경쟁력 확인해봐!\n${tossLink}`;
+      await share({ message });
+      return;
+    } catch { /* WebView 미지원 환경 → fallback */ }
+
+    // 2) fallback: navigator.share (텍스트만)
+    const text = `📊 스펙 온도 분석 결과\n${getScoreTier(result.score)}\n\n"스펙 온도"로 취업 경쟁력 확인해봐!`;
     try { await navigator.share({ title: '스펙 온도 분석 결과', text }); } catch { /* 취소 */ }
   };
 
@@ -133,6 +134,20 @@ export default function Result({ result, onRestart, onShare }: Props) {
 
         <Border />
 
+        {/* 1순위 행동 배너 */}
+        {result.criticalAction && (
+          <>
+            <div style={s.criticalBanner}>
+              <span style={s.criticalIcon}>🚨</span>
+              <div>
+                <p style={s.criticalTitle}>지금 당장 해야 할 1순위</p>
+                <p style={s.criticalText}>{result.criticalAction}</p>
+              </div>
+            </div>
+            <Border />
+          </>
+        )}
+
         {/* 강점 & 보완점 */}
         {(result.strengths?.length > 0 || result.weaknesses?.length > 0) && (
           <>
@@ -150,10 +165,10 @@ export default function Result({ result, onRestart, onShare }: Props) {
               )}
               {result.weaknesses?.length > 0 && (
                 <>
-                  <ListHeader title="🔧 보완 필요" />
+                  <ListHeader title="⚠️ 보완 필요" />
                   {result.weaknesses.map((item, i) => (
                     <div key={i} style={s.swRow}>
-                      <span style={{ ...s.dot, background: colors.orange500 }} />
+                      <span style={{ ...s.dot, background: colors.red500 }} />
                       <p style={s.swText}>{item}</p>
                     </div>
                   ))}
@@ -168,17 +183,8 @@ export default function Result({ result, onRestart, onShare }: Props) {
         <div style={s.section}>
           <ListHeader title="맞춤 인증 로드맵" />
           <div style={s.timelineWrap}>
-            <RoadmapTimeline items={result.roadmap} schedules={schedules} />
+            <RoadmapTimeline items={result.roadmap} />
           </div>
-          {result.roadmap.map((item) => (
-            <p
-              key={item.stage}
-              style={s.roadmapLink}
-              onClick={() => window.open(getQnetSearchUrl(item.name), '_blank')}
-            >
-              {item.name} 일정 큐넷에서 확인하기 &gt;
-            </p>
-          ))}
         </div>
 
         {/* 지금 해야 할 일 */}
@@ -208,9 +214,6 @@ export default function Result({ result, onRestart, onShare }: Props) {
       <div style={s.bottomBar}>
         <div style={s.bottomActions}>
           <div style={s.restartWrap}>
-            {adStatus === 'loaded' && (
-              <p style={s.adLabel}>광고</p>
-            )}
             <button style={s.outlineBtn} onClick={handleRestart}>다시 분석하기</button>
           </div>
           <button style={{ ...s.primaryBtn, opacity: isCapturing ? 0.7 : 1 }} onClick={handleShareImage} disabled={isCapturing}>
@@ -222,18 +225,23 @@ export default function Result({ result, onRestart, onShare }: Props) {
         </p>
       </div>
 
-      {/* 이미지 공유 모달 */}
-      {shareImageUrl && (
-        <div style={s.imageModal} onClick={() => setShareImageUrl(null)}>
-          <div style={s.imageModalInner} onClick={e => e.stopPropagation()}>
-            <img src={shareImageUrl} alt="결과 이미지" style={s.shareImg} />
-            <div style={s.imageModalButtons}>
-              <button style={s.imageModalSaveBtn} onClick={handleSaveImage}>저장하기</button>
-              <button style={s.imageModalShareBtn} onClick={handleShareFromModal}>공유하기</button>
-            </div>
-          </div>
+      {/* 이미지 공유 BottomSheet */}
+      <BottomSheet open={shareImageUrl !== null} onDimmerClick={() => setShareImageUrl(null)}>
+        <BottomSheet.Header>결과 공유하기</BottomSheet.Header>
+        <div style={{ padding: '0 24px 16px' }}>
+          {shareImageUrl && (
+            <img src={shareImageUrl} alt="결과 이미지" style={{ width: '100%', borderRadius: 12, display: 'block' }} />
+          )}
         </div>
-      )}
+        <BottomSheet.DoubleCTA
+          leftButton={
+            <button style={s.doubleCtaOutline} onClick={handleSaveImage}>저장하기</button>
+          }
+          rightButton={
+            <button style={s.doubleCtaPrimary} onClick={handleShareFromModal}>공유하기</button>
+          }
+        />
+      </BottomSheet>
     </div>
   );
 }
@@ -288,6 +296,33 @@ const s: Record<string, React.CSSProperties> = {
     textAlign: 'center',
     lineHeight: 1.5,
   },
+  criticalBanner: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    margin: '0 24px 16px',
+    padding: '14px 16px',
+    background: '#FFF1F2',
+    borderRadius: 12,
+    borderLeft: `4px solid ${colors.red500}`,
+  },
+  criticalIcon: {
+    fontSize: 22,
+    flexShrink: 0,
+  },
+  criticalTitle: {
+    margin: '0 0 2px',
+    fontSize: 12,
+    fontWeight: 600,
+    color: colors.red500,
+  },
+  criticalText: {
+    margin: 0,
+    fontSize: 14,
+    fontWeight: 700,
+    color: colors.grey900,
+    lineHeight: 1.4,
+  },
   section: {
     paddingBottom: 8,
   },
@@ -296,13 +331,6 @@ const s: Record<string, React.CSSProperties> = {
   },
   timelineWrap: {
     padding: '8px 24px 16px',
-  },
-  roadmapLink: {
-    margin: '0 24px 8px',
-    fontSize: 14,
-    color: colors.blue500,
-    fontWeight: 500,
-    cursor: 'pointer',
   },
   bottomBar: {
     position: 'fixed',
@@ -327,15 +355,6 @@ const s: Record<string, React.CSSProperties> = {
     flexDirection: 'column' as const,
     alignItems: 'center',
     gap: 4,
-  },
-  adLabel: {
-    margin: 0,
-    fontSize: 10,
-    color: colors.grey600,
-    border: `1px solid ${colors.grey600}`,
-    borderRadius: 2,
-    padding: '0 4px',
-    lineHeight: 1.6,
   },
   outlineBtn: {
     width: '100%',
@@ -431,51 +450,23 @@ const s: Record<string, React.CSSProperties> = {
     margin: 0,
     lineHeight: 1.4,
   },
-  imageModal: {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(0,0,0,0.75)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 999,
-    padding: '24px 16px',
-  },
-  imageModalInner: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    gap: 16,
+  doubleCtaOutline: {
     width: '100%',
-    maxWidth: 375,
-  },
-  shareImg: {
-    width: '100%',
-    borderRadius: 16,
-    display: 'block',
-  },
-  imageModalButtons: {
-    display: 'flex',
-    gap: 10,
-    width: '100%',
-  },
-  imageModalSaveBtn: {
-    flex: 1,
     height: 52,
+    border: `1.5px solid ${colors.blue500}`,
     borderRadius: 10,
-    background: 'rgba(255,255,255,0.18)',
-    border: '1.5px solid rgba(255,255,255,0.45)',
-    color: '#fff',
+    background: '#fff',
+    color: colors.blue500,
     fontSize: 16,
     fontWeight: 600,
     cursor: 'pointer',
   },
-  imageModalShareBtn: {
-    flex: 1,
+  doubleCtaPrimary: {
+    width: '100%',
     height: 52,
-    borderRadius: 10,
-    background: '#3182f6',
     border: 'none',
+    borderRadius: 10,
+    background: colors.blue500,
     color: '#fff',
     fontSize: 16,
     fontWeight: 600,

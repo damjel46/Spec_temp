@@ -20,7 +20,7 @@ export async function analyzeSpec(
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ commonSpec, jobSpec }),
-        signal: AbortSignal.timeout(60_000), // 60초 타임아웃
+        signal: AbortSignal.timeout(110_000), // 110초 타임아웃 (Vercel 120s 이내)
       });
 
       if (!response.ok) {

@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BottomSheet } from '@toss/tds-mobile';
+import { share, getTossShareLink, getSchemeUri } from '@apps-in-toss/web-framework';
+import { getScoreTier } from './utils/scoreTier';
 import Intro from './screens/Intro';
 import CommonForm from './screens/CommonForm';
 import JobForm from './screens/JobForm';
 import Loading from './screens/Loading';
 import Result from './screens/Result';
 import { CommonSpec, JobSpec, AnalysisResult } from './types/spec';
+import { analyzeSpec } from './api/openai';
+import { useAd } from './hooks/useAd';
 
 type Screen = 'intro' | 'common' | 'job' | 'loading' | 'result';
 
@@ -25,6 +29,12 @@ export default function App() {
   const [errorOpen, setErrorOpen] = useState(false);
   const [copiedOpen, setCopiedOpen] = useState(false);
   const [prevResult, setPrevResult] = useState<AnalysisResult | null>(null);
+
+  // 광고 훅 — 단일 인스턴스로 Loading/Result 화면이 adStatus를 공유
+  const { adStatus, loadAd, showAd } = useAd();
+
+  // 광고와 병렬로 실행되는 GPT 분석 Promise 보관
+  const analysisPromiseRef = useRef<Promise<AnalysisResult> | null>(null);
 
   // 이전 결과 및 입력 스펙 복원
   useEffect(() => {
@@ -52,12 +62,23 @@ export default function App() {
   const handleError = () => setErrorOpen(true);
 
   const handleShare = async () => {
-    const text = `📊 스펙 온도 분석 결과\n합격 가능성: ${result?.score}%\n${result?.grade}\n\n토스 앱에서 스펙 온도 검색하고 내 합격률 확인해봐!`;
+    const tier = result ? getScoreTier(result.score) : '';
+    const fallbackText = `📊 스펙 온도 분석 결과\n${result?.grade ?? ''}\n\n"스펙 온도"로 취업 경쟁력 확인해봐!`;
+    try {
+      const schemeUri = (getSchemeUri as any)?.() ?? 'intoss://spec-temp';
+      const tossLink = await getTossShareLink(schemeUri);
+      const message = `📊 내 스펙 온도 분석 결과\n${tier}\n\n"스펙 온도"로 취업 경쟁력 확인해봐!\n${tossLink}`;
+      if ((share as any).isSupported?.() === true) {
+        await share({ message });
+        return;
+      }
+    } catch { /* ignore */ }
+    // fallback
     if (navigator.share) {
-      try { await navigator.share({ title: '스펙 온도 분석 결과', text }); } catch { /* 취소 */ }
+      try { await navigator.share({ title: '스펙 온도 분석 결과', text: fallbackText }); } catch { /* 취소 */ }
     } else if (navigator.clipboard) {
       try {
-        await navigator.clipboard.writeText(text);
+        await navigator.clipboard.writeText(fallbackText);
         setCopiedOpen(true);
       } catch { setCopiedOpen(true); }
     } else {
@@ -76,7 +97,7 @@ export default function App() {
         <BottomSheet open={errorOpen} onDimmerClick={() => setErrorOpen(false)}>
           <BottomSheet.Header>분석 중 오류가 발생했어요</BottomSheet.Header>
           <div style={{ padding: '8px 24px 16px', fontSize: 14, color: '#6b7684', lineHeight: 1.6 }}>
-            일시적인 오류예요. API 키를 확인하거나 잠시 후 다시 시도해주세요.
+            일시적인 오류예요. 잠시 후 다시 시도해주세요.
           </div>
           <BottomSheet.CTA onClick={() => { setErrorOpen(false); setScreen('job'); }}>다시 시도하기</BottomSheet.CTA>
         </BottomSheet>
@@ -88,7 +109,7 @@ export default function App() {
     return (
       <CommonForm
         initialData={commonSpec ?? undefined}
-        onNext={(spec) => { setCommonSpec(spec); saveSpec(spec, jobSpec); setScreen('job'); }}
+        onNext={(spec) => { setCommonSpec(spec); saveSpec(spec, jobSpec); loadAd(); setScreen('job'); }}
       />
     );
   }
@@ -98,7 +119,26 @@ export default function App() {
       <JobForm
         commonSpec={commonSpec!}
         initialData={jobSpec ?? undefined}
-        onNext={(cs, js) => { setCommonSpec(cs); setJobSpec(js); saveSpec(cs, js); setScreen('loading'); }}
+        onNext={(cs, js) => {
+          setCommonSpec(cs);
+          setJobSpec(js);
+          saveSpec(cs, js);
+
+          // ① GPT 분석 즉시 시작 (광고와 병렬)
+          let earlyResult: AnalysisResult | null = null;
+          const promise = analyzeSpec(cs, js);
+          promise.then((r) => { earlyResult = r; }).catch(() => {});
+          analysisPromiseRef.current = promise;
+
+          // ② 광고 시작 — 광고가 끝날 때 분석도 이미 완료됐으면 바로 result로
+          showAd(() => {
+            if (earlyResult) {
+              handleDone(earlyResult);          // Loading 화면 스킵
+            } else {
+              setScreen('loading');             // 아직 분석 중 → Loading 대기
+            }
+          });
+        }}
         onBack={() => setScreen('common')}
       />
     );
@@ -109,6 +149,7 @@ export default function App() {
       <Loading
         commonSpec={commonSpec}
         jobSpec={jobSpec}
+        analysisPromise={analysisPromiseRef.current ?? undefined}
         onDone={handleDone}
         onError={handleError}
       />
