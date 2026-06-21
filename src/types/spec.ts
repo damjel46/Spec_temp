@@ -132,9 +132,11 @@ export interface AnalysisResult {
     period: string;
     name: string;
     desc: string;
+    examSchedule?: string | null;
   }>;
   strengths: string[];
   weaknesses: string[];
+  criticalAction?: string;
   positioningTip: string;
   actionPlan: ActionPlanItem[];
 }
